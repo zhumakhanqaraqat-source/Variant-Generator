@@ -1,6 +1,20 @@
+// Егер база 0-ден басталсын десең, let questions = []; деп қалдыр
 let questions = [];
 
-document.getElementById('totalQuestions').innerText = questions.length;
+function renderQuestions() {
+    let list = document.getElementById('questionsList');
+    document.getElementById('totalQuestions').innerText = questions.length;
+    list.innerHTML = "";
+
+    questions.forEach((q, index) => {
+        list.innerHTML += `
+            <li>
+                <span>${index + 1}. ${q}</span>
+                <button class="btn-delete" onclick="deleteQuestion(${index})">Өшіру 🗑️</button>
+            </li>
+        `;
+    });
+}
 
 function addQuestion() {
     let input = document.getElementById('questionInput');
@@ -8,12 +22,16 @@ function addQuestion() {
     
     if (text !== "") {
         questions.push(text);
-        document.getElementById('totalQuestions').innerText = questions.length;
+        renderQuestions();
         input.value = "";
-        alert("Сұрақ базаға қосылды!");
     } else {
         alert("Сұрақты енгізіңіз!");
     }
+}
+
+function deleteQuestion(index) {
+    questions.splice(index, 1); // Тізімнен таңдалған сұрақты өшіреді
+    renderQuestions();
 }
 
 function generateVariants() {
@@ -22,6 +40,11 @@ function generateVariants() {
     let output = document.getElementById('output');
     
     output.innerHTML = "";
+
+    if (questions.length === 0) {
+        alert("Базада ешқандай сұрақ жоқ! Алдымен сұрақ қосыңыз.");
+        return;
+    }
 
     if (qPerVariant > questions.length) {
         alert("Базада бұндай санға жететін сұрақ жоқ! Көбірек сұрақ қосыңыз.");
@@ -43,3 +66,6 @@ function generateVariants() {
         output.innerHTML += variantHTML;
     }
 }
+
+// Бет жүктелгенде бос тізімді шығару
+renderQuestions();
