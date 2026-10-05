@@ -1,7 +1,5 @@
-// Сұрақтар базасы (бастапқыда бос)
 let questions = [];
 
-// Сұрақтар тізімін экранға шығару функциясы
 function renderQuestions() {
     let list = document.getElementById('questionsList');
     let total = document.getElementById('totalQuestions');
@@ -23,7 +21,6 @@ function renderQuestions() {
     }
 }
 
-// Жаңа сұрақ қосу функциясы
 function addQuestion() {
     let input = document.getElementById('questionInput');
     if (!input) return;
@@ -35,17 +32,15 @@ function addQuestion() {
         renderQuestions();
         input.value = "";
     } else {
-        alert("Лүпілдетіп сұрақты жазыңыз!");
+        alert("Сұрақты енгізіңіз!");
     }
 }
 
-// Сұрақты өшіру функциясы
 function deleteQuestion(index) {
     questions.splice(index, 1);
     renderQuestions();
 }
 
-// Варианттарды құрастыру функциясы
 function generateVariants() {
     let variantCount = parseInt(document.getElementById('variantCount').value);
     let qPerVariant = parseInt(document.getElementById('questionsPerVariant').value);
@@ -79,7 +74,6 @@ function generateVariants() {
     }
 }
 
-// Бет ашылғанда бірден іске қосу
-window.onload = function() {
+document.addEventListener("DOMContentLoaded", function() {
     renderQuestions();
-};
+});
