@@ -10,8 +10,8 @@
     <div class="container">
         <h1>📝 Мұғалімге арналған Вариант Генераторы</h1>
         
-        <!-- Сұрақтарды топтап қосу бөлімі -->
-        <div class="card">
+        <!-- Сұрақтарды қосу бөлімі -->
+        <div class="card no-print">
             <h3>1. Сұрақтар мен тесттерді қосу</h3>
             <p class="hint">Сұрақтарды немесе жауап варианттары бар тесттерді Word-тан бірден көшіріп (paste) қойыңыз (Әр жаңа сұрақтың арасын бос жолмен бөліңіз):</p>
             
@@ -19,14 +19,17 @@
             
             <button onclick="addQuestions()">Сұрақтарды базаға қосу</button>
             
-            <p style="margin-top: 15px;">Базадағы сұрақтар саны: <strong id="totalQuestions">0</strong></p>
+            <div class="list-header">
+                <p>Базадағы сұрақтар саны: <strong id="totalQuestions">0</strong></p>
+                <button onclick="clearAllQuestions()" class="btn-clear">Базаны тазалау 🗑️</button>
+            </div>
             
             <h4>Базадағы сұрақтар тізімі:</h4>
             <ul id="questionsList" class="questions-list"></ul>
         </div>
 
         <!-- Вариант жасау бөлімі -->
-        <div class="card">
+        <div class="card no-print">
             <h3>2. Варианттарды генерациялау</h3>
             <label for="variantCount">Қанша вариант керек?</label>
             <input type="number" id="variantCount" min="1" max="10" value="2">
@@ -34,7 +37,18 @@
             <label for="questionsPerVariant">Әр вариантта қанша сұрақ болсын?</label>
             <input type="number" id="questionsPerVariant" min="1" max="10" value="3">
             
+            <div class="checkbox-group">
+                <input type="checkbox" id="shuffleAnswers" checked>
+                <label for="shuffleAnswers">A, B, C, D жауап варианттарын да араластыру</label>
+            </div>
+
             <button onclick="generateVariants()" class="btn-generate">Варианттарды құрастыру</button>
+        </div>
+
+        <!-- Басқару батырмалары (Басып шығару және Көшіру) -->
+        <div id="actionButtons" class="action-buttons no-print" style="display: none;">
+            <button onclick="window.print()" class="btn-print">🖨️ Печать / PDF сақтау</button>
+            <button onclick="copyToClipboard()" class="btn-copy">📋 Барлық вариантты көшіру</button>
         </div>
 
         <!-- Нәтиже шығатын жер -->
