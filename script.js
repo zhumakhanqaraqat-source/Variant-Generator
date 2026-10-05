@@ -1,34 +1,43 @@
-// Сұрақтар сақталатын массив
 let questions = [];
 
-// Жаңа сұрақ қосу
-function addQuestion() {
-    let input = document.getElementById('questionInput');
-    let text = input.value.trim();
-    
-    if (text !== "") {
-        questions.push(text);
-        input.value = "";
-        renderQuestions();
-    } else {
-        alert("Өтініш, сұрақты жазыңыз!");
-    }
-}
-
-// Тізімді экранға шығару
+// Сұрақтар мен тесттерді тізімге шығару
 function renderQuestions() {
     let list = document.getElementById('questionsList');
     let total = document.getElementById('totalQuestions');
     
-    total.innerText = questions.length;
-    list.innerHTML = "";
-
-    for (let i = 0; i < questions.length; i++) {
-        list.innerHTML += '<li>' + (i + 1) + '. ' + questions[i] + ' <button class="btn-delete" onclick="deleteQuestion(' + i + ')">Өшіру 🗑️</button></li>';
+    if (total) total.innerText = questions.length;
+    if (list) {
+        list.innerHTML = "";
+        for (let i = 0; i < questions.length; i++) {
+            list.innerHTML += '<li><div class="question-text"><strong>' + (i + 1) + '.</strong> ' + questions[i] + '</div> <button class="btn-delete" onclick="deleteQuestion(' + i + ')">Өшіру 🗑️</button></li>';
+        }
     }
 }
 
-// Сұрақты өшіру
+// Тесттер мен сұрақтарды топтап қосу
+function addQuestions() {
+    let input = document.getElementById('questionInput');
+    let text = input.value.trim();
+    
+    if (text !== "") {
+        // Екі немесе одан да көп бос жол қалдырылған жерден тесттерді ажыратамыз
+        let blocks = text.split(/\n\s*\n/);
+        
+        blocks.forEach(block => {
+            let trimmedBlock = block.trim();
+            if (trimmedBlock !== "") {
+                questions.push(trimmedBlock);
+            }
+        });
+
+        input.value = "";
+        renderQuestions();
+    } else {
+        alert("Өтініш, сұрақтар мен варианттарды жазыңыз немесе көшіріп қойыңыз!");
+    }
+}
+
+// Таңдалған сұрақты/тестті өшіру
 function deleteQuestion(index) {
     questions.splice(index, 1);
     renderQuestions();
@@ -43,12 +52,12 @@ function generateVariants() {
     output.innerHTML = "";
 
     if (questions.length === 0) {
-        alert("Базада ешқандай сұрақ жоқ! Алдымен сұрақ қосыңыз.");
+        alert("Базада ешқандай сұрақ немесе тест жоқ! Алдымен тесттерді қосыңыз.");
         return;
     }
 
     if (qPerVariant > questions.length) {
-        alert("Базада мұнша сұрақ жоқ! Көбірек сұрақ қосыңыз.");
+        alert("Базада мұнша сұрақ жоқ! Базада бары: " + questions.length + " сұрақ/тест.");
         return;
     }
 
