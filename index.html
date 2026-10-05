@@ -10,12 +10,16 @@
     <div class="container">
         <h1>📝 Мұғалімге арналған Вариант Генераторы</h1>
         
-        <!-- Сұрақ қосу бөлімі -->
+        <!-- Сұрақтарды топтап қосу бөлімі -->
         <div class="card">
-            <h3>1. Жаңа сұрақ қосу</h3>
-            <input type="text" id="questionInput" placeholder="Сұрақты жазыңыз (мысалы: 5x + 3 = 18 болса, x = ?)">
-            <button onclick="addQuestion()">Сұрақты базаға қосу</button>
-            <p>Базадағы сұрақтар саны: <strong id="totalQuestions">0</strong></p>
+            <h3>1. Сұрақтар мен тесттерді қосу</h3>
+            <p class="hint">Сұрақтарды немесе жауап варианттары бар тесттерді Word-тан бірден көшіріп (paste) қойыңыз (Әр жаңа сұрақтың арасын бос жолмен бөліңіз):</p>
+            
+            <textarea id="questionInput" rows="8" placeholder="Мысалы:&#10;&#10;1. Қазақстанның астанасы қай қала?&#10;A) Алматы&#10;B) Астана&#10;C) Шымкент&#10;&#10;2. 5 + 5 неге тең?&#10;A) 10&#10;B) 12"></textarea>
+            
+            <button onclick="addQuestions()">Сұрақтарды базаға қосу</button>
+            
+            <p style="margin-top: 15px;">Базадағы сұрақтар саны: <strong id="totalQuestions">0</strong></p>
             
             <h4>Базадағы сұрақтар тізімі:</h4>
             <ul id="questionsList" class="questions-list"></ul>
