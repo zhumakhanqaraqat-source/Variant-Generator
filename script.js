@@ -1,106 +1,85 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    margin: 0;
-    padding: 20px;
-    color: #333;
+// Сұрақтар базасы (бастапқыда бос)
+let questions = [];
+
+// Сұрақтар тізімін экранға шығару функциясы
+function renderQuestions() {
+    let list = document.getElementById('questionsList');
+    let total = document.getElementById('totalQuestions');
+    
+    if (total) {
+        total.innerText = questions.length;
+    }
+    
+    if (list) {
+        list.innerHTML = "";
+        questions.forEach((q, index) => {
+            list.innerHTML += `
+                <li>
+                    <span>${index + 1}. ${q}</span>
+                    <button class="btn-delete" onclick="deleteQuestion(${index})">Өшіру 🗑️</button>
+                </li>
+            `;
+        });
+    }
 }
 
-.container {
-    max-width: 700px;
-    margin: 0 auto;
+// Жаңа сұрақ қосу функциясы
+function addQuestion() {
+    let input = document.getElementById('questionInput');
+    if (!input) return;
+
+    let text = input.value.trim();
+    
+    if (text !== "") {
+        questions.push(text);
+        renderQuestions();
+        input.value = "";
+    } else {
+        alert("Лүпілдетіп сұрақты жазыңыз!");
+    }
 }
 
-h1 {
-    text-align: center;
-    color: #2c3e50;
+// Сұрақты өшіру функциясы
+function deleteQuestion(index) {
+    questions.splice(index, 1);
+    renderQuestions();
 }
 
-.card {
-    background: #ffffff;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+// Варианттарды құрастыру функциясы
+function generateVariants() {
+    let variantCount = parseInt(document.getElementById('variantCount').value);
+    let qPerVariant = parseInt(document.getElementById('questionsPerVariant').value);
+    let output = document.getElementById('output');
+    
+    output.innerHTML = "";
+
+    if (questions.length === 0) {
+        alert("Базада ешқандай сұрақ жоқ! Алдымен сұрақ қосыңыз.");
+        return;
+    }
+
+    if (qPerVariant > questions.length) {
+        alert("Базада бұндай санға жететін сұрақ жоқ! Көбірек сұрақ қосыңыз.");
+        return;
+    }
+
+    for (let i = 1; i <= variantCount; i++) {
+        let shuffled = [...questions].sort(() => 0.5 - Math.random());
+        let selectedQuestions = shuffled.slice(0, qPerVariant);
+
+        let variantHTML = `<div class="variant-box">
+            <div class="variant-title">📌 Вариант №${i}</div><ol>`;
+        
+        selectedQuestions.forEach(q => {
+            variantHTML += `<li>${q}</li>`;
+        });
+
+        variantHTML += `</ol></div>`;
+        output.innerHTML += variantHTML;
+    }
 }
 
-input[type="text"], input[type="number"] {
-    width: 100%;
-    padding: 10px;
-    margin: 8px 0 15px 0;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-button {
-    background-color: #3498db;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 100%;
-}
-
-button:hover {
-    background-color: #2980b9;
-}
-
-.btn-generate {
-    background-color: #2ecc71;
-}
-
-.btn-generate:hover {
-    background-color: #27ae60;
-}
-
-.variant-box {
-    background: #ffffff;
-    border-left: 5px solid #3498db;
-    padding: 15px;
-    margin-top: 15px;
-    border-radius: 5px;
-}
-
-.variant-title {
-    font-weight: bold;
-    color: #2c3e50;
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-
-/* Сұрақтар тізімі мен өшіру батырмасының стилі */
-.questions-list {
-    list-style: none;
-    padding: 0;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.questions-list li {
-    background: #f9f9f9;
-    padding: 8px 12px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid #ddd;
-}
-
-.btn-delete {
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    width: auto;
-}
-
-.btn-delete:hover {
-    background-color: #c0392b;
-}
+// Бет ашылғанда бірден іске қосу
+window.onload = function() {
+    renderQuestions();
+};
