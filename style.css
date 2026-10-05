@@ -7,7 +7,7 @@ body {
 }
 
 .container {
-    max-width: 700px;
+    max-width: 750px;
     margin: 0 auto;
 }
 
@@ -45,6 +45,18 @@ textarea {
     resize: vertical;
 }
 
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 8px;
+}
+
+.checkbox-group input {
+    width: auto;
+    cursor: pointer;
+}
+
 button {
     background-color: #3498db;
     color: white;
@@ -68,19 +80,22 @@ button:hover {
     background-color: #27ae60;
 }
 
-.variant-box {
-    background: #ffffff;
-    border-left: 5px solid #3498db;
-    padding: 15px;
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 15px;
-    border-radius: 5px;
 }
 
-.variant-title {
-    font-weight: bold;
-    color: #2c3e50;
-    font-size: 18px;
-    margin-bottom: 10px;
+.btn-clear {
+    background-color: #95a5a6;
+    width: auto;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.btn-clear:hover {
+    background-color: #7f8c8d;
 }
 
 .questions-list {
@@ -119,11 +134,61 @@ button:hover {
     flex-shrink: 0;
 }
 
-.btn-delete:hover {
-    background-color: #c0392b;
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn-print {
+    background-color: #8e44ad;
+}
+
+.btn-print:hover {
+    background-color: #732d91;
+}
+
+.btn-copy {
+    background-color: #e67e22;
+}
+
+.btn-copy:hover {
+    background-color: #d35400;
+}
+
+.variant-box {
+    background: #ffffff;
+    border-left: 5px solid #3498db;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 5px;
+    page-break-inside: avoid;
+}
+
+.variant-title {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 18px;
+    margin-bottom: 10px;
 }
 
 .variant-box ol li {
     margin-bottom: 12px;
     white-space: pre-line;
+}
+
+/* Печать алайында артық элементтерді жасыру */
+@media print {
+    body {
+        background-color: #fff;
+        padding: 0;
+    }
+    .no-print, h1 {
+        display: none !important;
+    }
+    .variant-box {
+        border-left: 2px solid #000;
+        box-shadow: none;
+        margin-bottom: 30px;
+    }
 }
