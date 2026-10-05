@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бақылау жұмысына вариант генераторы</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Мұғалімге арналған Вариант Генераторы</h1>
+        
+        <!-- Сұрақ қосу бөлімі -->
+        <div class="card">
+            <h3>1. Жаңа сұрақ қосу</h3>
+            <input type="text" id="questionInput" placeholder="Сұрақты жазыңыз (мысалы: 5x + 3 = 18 болса, x = ?)">
+            <button onclick="addQuestion()">Сұрақты базаға қосу</button>
+            <p>Базадағы сұрақтар саны: <strong id="totalQuestions">0</strong></p>
+        </div>
+
+        <!-- Вариант жасау бөлімі -->
+        <div class="card">
+            <h3>2. Варианттарды генерациялау</h3>
+            <label for="variantCount">Қанша вариант керек?</label>
+            <input type="number" id="variantCount" min="1" max="10" value="2">
+            
+            <label for="questionsPerVariant">Әр вариантта қанша сұрақ болсын?</label>
+            <input type="number" id="questionsPerVariant" min="1" max="10" value="3">
+            
+            <button onclick="generateVariants()" class="btn-generate">Варианттарды құрастыру</button>
+        </div>
+
+        <!-- Нәтиже шығатын жер -->
+        <div id="output" class="output-section"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
