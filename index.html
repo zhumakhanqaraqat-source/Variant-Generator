@@ -53,6 +53,34 @@
 
         <!-- Нәтиже шығатын жер -->
         <div id="output" class="output-section"></div>
+
+        <!-- Оқушыларға арналған интерактивті тест режимі -->
+        <div class="card no-print" style="margin-top: 30px; border: 2px dashed #3498db;">
+            <h3>🎮 Оқушылардың интерактивті тест режимі (Таймермен)</h3>
+            
+            <!-- 1. Тіркелу экраны -->
+            <div id="student-login-box">
+                <p class="hint">Тест тапсыру үшін аты-жөніңізді енгізіңіз:</p>
+                <input type="text" id="studentNameInput" placeholder="Аты-жөніңіз (Мысалы: Айдын)">
+                <button onclick="startInteractiveQuiz()" class="btn-generate">Тестті бастау 🚀</button>
+            </div>
+
+            <!-- 2. Тест өту экраны (бастапқыда жасырулы тұрады) -->
+            <div id="interactive-quiz-box" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4 id="student-greeting" style="margin: 0; color: #2c3e50;"></h4>
+                    <div id="timer-display" style="font-size: 16px; font-weight: bold; color: #e74c3c; background: #fadbd8; padding: 5px 10px; border-radius: 5px;">
+                        ⏱️ Уақыт: <span id="time-left">60</span> сек
+                    </div>
+                </div>
+
+                <div id="quiz-question-container" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 15px;">
+                    <!-- Сұрақтар мен нұсқалар осында шығады -->
+                </div>
+
+                <button onclick="nextInteractiveQuestion()" class="btn-generate" id="next-quiz-btn">Келесі сұрақ</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
