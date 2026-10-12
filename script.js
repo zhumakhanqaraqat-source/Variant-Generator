@@ -1,65 +1,47 @@
-// Oртақ бұлттық сақтау орны (Барлық құрылғылар үшін бірдей ID)
-const BIN_ID = '652f750c54105e666fbc4b2a'; // Мысал ретіндегі ортақ bin
-const API_KEY = '$2a$10$7XvW7G3vJ6h7xW4vW7G3vu...'; 
+let questions = [];
+let quizConfig = { qCount: 10, tMinutes: 10 };
 
-// Деректерді бұлттан алу функциясы
-async function fetchCloudData() {
-    try {
-        let response = await fetch('https://api.jsonbin.io/v3/b/' + BIN_ID + '/latest', {
-            headers: { 'X-Master-Key': '$2a$10$X8m1m7Z7...' }
-        });
-        let json = await response.json();
-        if (json && json.record) {
-            return json.record;
-        }
-    } catch (e) {
-        console.log("Желілік қате, локалды жадыға өту...");
-    }
-    return null;
-}
-
-// Деректерді бұлтқа сақтау функциясы
-async function saveCloudData(data) {
-    try {
-        await fetch('https://api.jsonbin.io/v3/b/' + BIN_ID, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': '$2a$10$X8m1m7Z7...'
-            },
-            body: JSON.stringify(data)
-        });
-    } catch (e) {
-        console.log("Сақтау кезінде қате шықты.");
-    }
-}
-
-// Негізгі деректерді жүктеу
-let questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [
-    "1. x + 15 = 40 болса, x-тің мәнін табыңыз:\nA) 25\nB) 15\nC) 30\n*D) 20",
-    "2. Үшбұрыштың ішкі бұрыштарының қосындысы неше градусқа тең?\n*A) 180°\nB) 360°\nC) 90°\nD) 120°"
-];
-
-document.addEventListener('DOMContentLoaded', async function() {
-    // Бұлттан соңғы деректерді тартып алу
-    let cloudData = await fetchCloudData();
-    if (cloudData) {
-        if (cloudData.questions) questions = cloudData.questions;
-        if (cloudData.qCount) localStorage.setItem('quiz_q_count', cloudData.qCount);
-        if (cloudData.tMinutes) localStorage.setItem('quiz_time_minutes', cloudData.tMinutes);
-        if (cloudData.results) localStorage.setItem('student_results', JSON.stringify(cloudData.results));
-    }
-
+// Сайт ашылғанда сілтемеден (URL) немесе жадтан сұрақтарды оқып алу
+document.addEventListener('DOMContentLoaded', function() {
+    loadDataFromURLOrStorage();
     renderQuestions();
     renderResults();
     
-    let qCount = localStorage.getItem('quiz_q_count') || 10;
-    let tMinutes = localStorage.getItem('quiz_time_minutes') || 10;
     let infoHint = document.getElementById('test-info-hint');
     if (infoHint) {
-        infoHint.innerHTML = "Берілген сұрақ саны: <b>" + qCount + "</b> | Уақыт: <b>" + tMinutes + " минут</b>";
+        infoHint.innerHTML = "Берілген сұрақ саны: <b>" + quizConfig.qCount + "</b> | Уақыт: <b>" + quizConfig.tMinutes + " минут</b>";
     }
 });
+
+function loadDataFromURLOrStorage() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        
+        if (encodedData) {
+            // Егер сілтемеде деректер бар болса, соны оқимыз
+            const decodedJSON = decodeURIComponent(escape(atob(encodedData)));
+            const parsedData = JSON.parse(decodedJSON);
+            
+            questions = parsedData.questions || [];
+            quizConfig.qCount = parsedData.qCount || 10;
+            quizConfig.tMinutes = parsedData.tMinutes || 10;
+            
+            // Құрылғыда сақтап қоямыз
+            localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
+            localStorage.setItem('quiz_q_count', quizConfig.qCount);
+            localStorage.setItem('quiz_time_minutes', quizConfig.tMinutes);
+            return;
+        }
+    } catch (e) {
+        console.log("Сілтемені оқу кезінде қате кетті.");
+    }
+    
+    // Егер сілтемеде болмаса, жадтан (localStorage) аламыз
+    questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
+    quizConfig.qCount = parseInt(localStorage.getItem('quiz_q_count')) || 10;
+    quizConfig.tMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || 10;
+}
 
 function renderQuestions() {
     let list = document.getElementById('questionsList');
@@ -76,7 +58,7 @@ function renderQuestions() {
     }
 }
 
-async function addQuestions() {
+function addQuestions() {
     let input = document.getElementById('questionInput');
     if (!input) return;
     let text = input.value.trim();
@@ -90,27 +72,22 @@ async function addQuestions() {
 
         input.value = "";
         renderQuestions();
-        
-        // Бұлтқа деректерді жіберу
-        await syncDataToCloud();
-        alert("Сұрақтар базаға және бұлтқа сәтті қосылды!");
+        alert("Сұрақтар базаға қосылды!");
     } else {
         alert("Өтініш, сұрақтарды жазыңыз!");
     }
 }
 
-async function clearAllQuestions() {
+function clearAllQuestions() {
     if (confirm("Барлық сұрақтарды өшіргіңіз келе ме?")) {
         questions = [];
         renderQuestions();
-        await syncDataToCloud();
     }
 }
 
-async function deleteQuestion(index) {
+function deleteQuestion(index) {
     questions.splice(index, 1);
     renderQuestions();
-    await syncDataToCloud();
 }
 
 function renderResults() {
@@ -136,15 +113,14 @@ function renderResults() {
     tbody.innerHTML = html;
 }
 
-async function clearResults() {
+function clearResults() {
     if (confirm("Барлық оқушы нәтижелерін өшіргіңіз келе ме?")) {
         localStorage.removeItem('student_results');
         renderResults();
-        await syncDataToCloud();
     }
 }
 
-async function generateVariants() {
+function generateVariants() {
     let variantCountInput = document.getElementById('variantCount');
     let qPerVariantInput = document.getElementById('questionsPerVariant');
     let timeInput = document.getElementById('testTimeMinutes');
@@ -155,6 +131,9 @@ async function generateVariants() {
     let variantCount = parseInt(variantCountInput ? variantCountInput.value : 1);
     let qPerVariant = parseInt(qPerVariantInput ? qPerVariantInput.value : 1);
     let testMinutes = parseInt(timeInput ? timeInput.value : 10);
+
+    quizConfig.qCount = qPerVariant;
+    quizConfig.tMinutes = testMinutes;
 
     localStorage.setItem('quiz_q_count', qPerVariant);
     localStorage.setItem('quiz_time_minutes', testMinutes);
@@ -186,24 +165,54 @@ async function generateVariants() {
     let actionButtons = document.getElementById('actionButtons');
     if (actionButtons) actionButtons.style.display = "flex";
 
-    await syncDataToCloud();
-    alert("Баптаулар мен варианттар бұлтқа сақталды!");
+    // Барлық сұрақтар мен баптауларды сілтемеге қосып дайындау
+    generateShareableLink();
 }
 
-async function syncDataToCloud() {
-    let data = {
+function generateShareableLink() {
+    let dataObj = {
         questions: questions,
-        qCount: localStorage.getItem('quiz_q_count') || 10,
-        tMinutes: localStorage.getItem('quiz_time_minutes') || 10,
-        results: JSON.parse(localStorage.getItem('student_results')) || []
+        qCount: quizConfig.qCount,
+        tMinutes: quizConfig.tMinutes
     };
-    await saveCloudData(data);
+    
+    let jsonString = JSON.stringify(dataObj);
+    let encodedData = btoa(unescape(encodeURIComponent(jsonString)));
+    
+    // Сайттың негізгі мекенжайы
+    let baseUrl = window.location.href.split('?')[0].replace('teacher.html', 'index.html');
+    if (!baseUrl.endsWith('index.html') && !baseUrl.endsWith('/')) {
+        baseUrl += '/';
+    }
+    // Егер басқа файл болса негізгі сілтемені алу
+    baseUrl = baseUrl.replace(/\/[^\/]*$/, '/index.html');
+
+    let fullShareLink = baseUrl + '?data=' + encodedData;
+
+    let output = document.getElementById('output');
+    if (output) {
+        output.innerHTML += '<div style="margin-top: 15px; padding: 12px; background: #e8f8f5; border: 1px solid #27ae60; border-radius: 6px;">' +
+                            '<p style="font-weight: bold; color: #27ae60; margin-bottom: 5px;">🔗 Оқушыларға арналған ортақ сілтеме:</p>' +
+                            '<input type="text" id="shareLinkInput" value="' + fullShareLink + '" readonly style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff;" onclick="this.select();">' +
+                            '<button type="button" onclick="copyShareLink()" style="margin-top: 8px; background: #27ae60; color: #white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-weight: bold;">Сілтемені көшіру 📋</button>' +
+                            '</div>';
+    }
+}
+
+function copyShareLink() {
+    let input = document.getElementById('shareLinkInput');
+    if (input) {
+        input.select();
+        navigator.clipboard.writeText(input.value).then(() => {
+            alert("Сілтеме буферге көшірілді! Оны басқа телефондарға жібере аласыз.");
+        });
+    }
 }
 
 function copyToClipboard() {
     let outputText = document.getElementById('output').innerText;
     navigator.clipboard.writeText(outputText).then(() => {
-        alert("Көшірілді!");
+        alert("Варианттар көшірілді!");
     });
 }
 
@@ -216,7 +225,7 @@ let currentStudentName = "";
 let quizTimer;
 let quizTimeLeft = 600;
 
-async function startInteractiveQuiz() {
+function startInteractiveQuiz() {
     let nameInput = document.getElementById('studentNameInput');
     currentStudentName = nameInput ? nameInput.value.trim() : "";
 
@@ -225,30 +234,22 @@ async function startInteractiveQuiz() {
         return;
     }
 
-    // Тест басталарда бұлттан соңғы деректерді жаңартып алу
-    let cloudData = await fetchCloudData();
-    if (cloudData && cloudData.questions) {
-        questions = cloudData.questions;
-        if (cloudData.qCount) localStorage.setItem('quiz_q_count', cloudData.qCount);
-        if (cloudData.tMinutes) localStorage.setItem('quiz_time_minutes', cloudData.tMinutes);
-    }
+    // Деректерді қайта тексеріп алу
+    loadDataFromURLOrStorage();
 
     if (!questions || questions.length === 0) {
-        alert("Әзірге тест сұрақтары жоқ!");
+        alert("Әзірге тест сұрақтары жоқ! Мұғалім берген дұрыс сілтеме арқылы кіріңіз.");
         return;
     }
 
-    let targetCount = parseInt(localStorage.getItem('quiz_q_count')) || 10;
-    let targetMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || 10;
-
-    let takeCount = Math.min(targetCount, questions.length);
+    let takeCount = Math.min(quizConfig.qCount, questions.length);
     let shuffled = questions.slice().sort(function() { return 0.5 - Math.random(); });
     currentQuizQuestions = shuffled.slice(0, takeCount);
 
     currentQuizIdx = 0;
     quizScore = 0;
     studentAnswers = [];
-    quizTimeLeft = targetMinutes * 60;
+    quizTimeLeft = quizConfig.tMinutes * 60;
 
     document.getElementById('student-login-box').style.display = 'none';
     document.getElementById('interactive-quiz-box').style.display = 'block';
@@ -335,7 +336,7 @@ function nextInteractiveQuestion() {
     showInteractiveQuestion();
 }
 
-async function endInteractiveQuiz(message) {
+function endInteractiveQuiz(message) {
     let container = document.getElementById('quiz-question-container');
     let nextBtn = document.getElementById('next-quiz-btn');
     if (nextBtn) nextBtn.style.display = 'none';
@@ -351,9 +352,6 @@ async function endInteractiveQuiz(message) {
         date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
     });
     localStorage.setItem('student_results', JSON.stringify(results));
-
-    // Нәтижені ортақ бұлтқа синхрондау (Мұғалім көруі үшін)
-    await syncDataToCloud();
 
     let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
                      '<h3>🎉 ' + message + '</h3>' +
