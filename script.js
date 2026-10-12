@@ -82,7 +82,6 @@ function generateVariants() {
 
         let html = '<div class="variant-box"><div class="variant-title">📌 Вариант №' + i + '</div><ol>';
         for (let j = 0; j < selected.length; j++) {
-            // Баспаға шығарғанда жұлдызшаны алып тастап көрсетеміз
             html += '<li>' + selected[j].replace(/\*/g, '') + '</li>';
         }
         html += '</ol></div>';
@@ -105,10 +104,11 @@ function copyToClipboard() {
     });
 }
 
-// --- Оқушыларға арналған интерактивті тест (Нұсқалар мен ұпай есептеу) ---
+// --- Оқушыларға арналған интерактивті тест (Толық түзетілген нұсқа) ---
 let currentQuizQuestions = [];
 let currentQuizIdx = 0;
 let quizScore = 0;
+let studentAnswers = []; // Оқушының берген жауаптарын сақтау үшін
 let quizTimer;
 let quizTimeLeft = 120;
 
@@ -128,10 +128,6 @@ function startInteractiveQuiz() {
         return;
     }
 
-    document.getElementById('student-login-box').style.display = 'none';
-    document.getElementById('interactive-quiz-box').style.display = 'block';
-    document.getElementById('student-greeting').innerText = "Қатысушы: " + studentName;
-
     currentQuizQuestions = questions.slice().sort(function() { return 0.5 - Math.random(); });
     if (currentQuizQuestions.length > 5) {
         currentQuizQuestions = currentQuizQuestions.slice(0, 5);
@@ -139,7 +135,12 @@ function startInteractiveQuiz() {
 
     currentQuizIdx = 0;
     quizScore = 0;
+    studentAnswers = [];
     quizTimeLeft = 120;
+
+    document.getElementById('student-login-box').style.display = 'none';
+    document.getElementById('interactive-quiz-box').style.display = 'block';
+    document.getElementById('student-greeting').innerText = "Қатысушы: " + studentName;
 
     showInteractiveQuestion();
     startQuizTimer();
@@ -168,36 +169,39 @@ function showInteractiveQuestion() {
 
     let fullText = currentQuizQuestions[currentQuizIdx];
     let lines = fullText.split('\n');
-    let questionTitle = lines[0]; // Сұрақтың өзі
-    let options = lines.slice(1); // Варианттар
+    let validLines = lines.filter(l => l.trim() !== "");
+    
+    let questionTitle = validLines[0]; // Сұрақтың өзі
+    let options = validLines.slice(1); // A, B, C, D нұсқалары
 
     let container = document.getElementById('quiz-question-container');
     
     let html = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong> ' + questionTitle + '</p><div style="margin: 15px 0;">';
 
-    let correctAnswerMarked = "";
+    let correctOptionLetter = "";
 
-    options.forEach(opt => {
+    options.forEach((opt, idx) => {
         let trimmedOpt = opt.trim();
-        if (trimmedOpt !== "") {
-            let isCorrect = trimmedOpt.startsWith('*');
-            let cleanOpt = isCorrect ? trimmedOpt.substring(1).trim() : trimmedOpt;
-            
-            if (isCorrect) {
-                correctAnswerMarked = cleanOpt.charAt(0); // Мысалы: 'A', 'B' немесе толық мәтін
-            }
-
-            let optLetter = cleanOpt.charAt(0); // A, B, C, D
-
-            html += '<label style="display:block; margin-bottom: 10px; cursor:pointer; padding: 8px; background: #fff; border: 1px solid #ccc; border-radius: 4px;">' +
-                    '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px;"> ' + 
-                    cleanOpt + '</label>';
+        let isCorrect = trimmedOpt.startsWith('*');
+        let cleanOpt = isCorrect ? trimmedOpt.substring(1).trim() : trimmedOpt;
+        
+        // Әр варианттың әрпін анықтау (A, B, C, D)
+        let letterMatch = cleanOpt.match(/^([A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІі])[\)\.]/);
+        let optLetter = letterMatch ? letterMatch[1].toUpperCase() : String.fromCharCode(65 + idx);
+        
+        if (isCorrect) {
+            correctOptionLetter = optLetter;
         }
+
+        // Әр вариантқа жеке батырма (radio button) жасау
+        html += '<label style="display:block; margin-bottom: 10px; cursor:pointer; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">' +
+                '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px; transform: scale(1.2);"> ' + 
+                cleanOpt + '</label>';
     });
 
     html += '</div>';
     container.innerHTML = html;
-    container.dataset.correct = correctAnswerMarked;
+    container.dataset.correctOption = correctOptionLetter;
 }
 
 function nextInteractiveQuestion() {
@@ -217,12 +221,21 @@ function nextInteractiveQuestion() {
     }
 
     let container = document.getElementById('quiz-question-container');
-    let correctVal = container.dataset.correct;
+    let correctOpt = container.dataset.correctOption;
 
-    // Егер таңдалған жауап дұрыс болса, балл қосамыз
-    if (selectedVal.toUpperCase() === correctVal.toUpperCase()) {
+    let isCorrect = (selectedVal.toUpperCase() === correctOpt.toUpperCase());
+    if (isCorrect) {
         quizScore++;
     }
+
+    // Оқушының жауабын тізімге сақтап қою (талдау үшін)
+    studentAnswers.push({
+        questionNum: currentQuizIdx + 1,
+        questionText: currentQuizQuestions[currentQuizIdx],
+        selected: selectedVal,
+        correct: correctOpt,
+        isCorrect: isCorrect
+    });
 
     currentQuizIdx++;
     showInteractiveQuestion();
@@ -236,10 +249,25 @@ function endInteractiveQuiz(message) {
 
     let totalQ = currentQuizQuestions.length;
 
-    container.innerHTML = '<div style="text-align: center; padding: 20px;">' +
-                          '<h3>🎉 ' + message + '</h3>' +
-                          '<p style="font-size: 18px; margin-top: 15px;">Сіздің жинаған ұпайыңыз:</p>' +
-                          '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
-                          '<p class="hint" style="margin-top: 15px;">Тестке қатысқаныңызға рақмет!</p>' +
-                          '</div>';
+    // Нәтиже мен толық талдауды (ревью) шығару
+    let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
+                     '<h3>🎉 ' + message + '</h3>' +
+                     '<p style="font-size: 18px; margin-top: 10px;">Сіздің жинаған ұпайыңыз:</p>' +
+                     '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
+                     '</div><hr style="margin: 15px 0;"><h4 style="margin-bottom:10px;">Жауаптарды талдау:</h4>' +
+                     '<div style="text-align: left; max-height: 320px; overflow-y: auto;">';
+
+    studentAnswers.forEach((ans) => {
+        let statusColor = ans.isCorrect ? '#27ae60' : '#e74c3c';
+        let statusText = ans.isCorrect ? 'Дұрыс ✅' : 'Қате ❌';
+        
+        reviewHtml += '<div style="background: #fff; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 5px solid ' + statusColor + '; border: 1px solid #ddd;">' +
+                      '<p><strong>' + ans.questionNum + '-сұрақ:</strong></p>' +
+                      '<p style="font-size: 13px; color: #555; white-space: pre-line; margin: 5px 0;">' + ans.questionText.replace(/\*/g, '') + '</p>' +
+                      '<p style="margin-top: 5px; font-size: 14px;">Сіздің жауабыңыз: <strong>' + ans.selected + '</strong> | Дұрыс жауап: <strong>' + ans.correct + '</strong> — <span style="color: ' + statusColor + '; font-weight: bold;">' + statusText + '</span></p>' +
+                      '</div>';
+    });
+
+    reviewHtml += '</div>';
+    container.innerHTML = reviewHtml;
 }
