@@ -8,18 +8,18 @@
 </head>
 <body>
     <div class="container" style="margin-top: 50px;">
-        <div class="card" style="border: 2px solid #3498db; text-align: center;">
-            <h2>🎓 Онлайн Тестілеу жүйесі</h2>
-            <p class="hint">Мұғалім берген тапсырманы орындау үшін аты-жөніңізді жазыңыз.</p>
+        <div class="card" style="border: 2px solid #3498db;">
+            <h2 style="text-align: center;">🎓 Онлайн Тестілеу жүйесі</h2>
             
             <!-- 1. Тіркелу экраны -->
-            <div id="student-login-box" style="margin-top: 20px;">
+            <div id="student-login-box" style="text-align: center; margin-top: 20px;">
+                <p class="hint">Тест тапсыру үшін аты-жөніңізді енгізіңіз:</p>
                 <input type="text" id="studentNameInput" placeholder="Аты-жөніңіз (Мысалы: Айдын)" style="max-width: 300px; margin: 0 auto 15px auto;">
-                <button onclick="startInteractiveQuiz()" class="btn-generate" style="max-width: 300px; margin: 0 auto;">Тестті бастау 🚀</button>
+                <button type="button" onclick="startInteractiveQuiz()" class="btn-generate" style="max-width: 300px; margin: 0 auto;">Тестті бастау 🚀</button>
             </div>
 
             <!-- 2. Тест өту экраны -->
-            <div id="interactive-quiz-box" style="display: none; text-align: left;">
+            <div id="interactive-quiz-box" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h4 id="student-greeting" style="margin: 0; color: #2c3e50;"></h4>
                     <div id="timer-display" style="font-size: 16px; font-weight: bold; color: #e74c3c; background: #fadbd8; padding: 5px 10px; border-radius: 5px;">
@@ -28,10 +28,10 @@
                 </div>
 
                 <div id="quiz-question-container" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 15px;">
-                    <!-- Сұрақтар осында шығады -->
+                    <!-- Сұрақтар мен нұсқалар осында шығады -->
                 </div>
 
-                <button onclick="nextInteractiveQuestion()" class="btn-generate" id="next-quiz-btn">Келесі сұрақ</button>
+                <button type="button" onclick="nextInteractiveQuestion()" class="btn-generate" id="next-quiz-btn">Келесі сұрақ</button>
             </div>
         </div>
     </div>
