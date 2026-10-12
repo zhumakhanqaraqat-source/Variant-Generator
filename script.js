@@ -1,49 +1,16 @@
-let questions = [];
-let quizConfig = { qCount: 10, tMinutes: 10 };
+let questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
 
-// Сайт ашылғанда сілтемеден (URL) деректерді оқып алу
 document.addEventListener('DOMContentLoaded', function() {
-    loadDataFromURL();
     renderQuestions();
     renderResults();
-    
-    let infoHint = document.getElementById('test-info-hint');
-    if (infoHint) {
-        infoHint.innerHTML = "Берілген сұрақ саны: <b>" + quizConfig.qCount + "</b> | Уақыт: <b>" + quizConfig.tMinutes + " минут</b>";
-    }
 });
-
-function loadDataFromURL() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedData = urlParams.get('data');
-        
-        if (encodedData) {
-            const decodedJSON = decodeURIComponent(escape(atob(encodedData)));
-            const parsedData = JSON.parse(decodedJSON);
-            
-            questions = parsedData.questions || [];
-            quizConfig.qCount = parsedData.qCount || 10;
-            quizConfig.tMinutes = parsedData.tMinutes || 10;
-            
-            // Телефонның жадында сақтап қоямыз
-            localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
-            localStorage.setItem('quiz_q_count', quizConfig.qCount);
-            localStorage.setItem('quiz_time_minutes', quizConfig.tMinutes);
-            return;
-        }
-    } catch (e) {
-        console.log("Сілтемені оқу қатесі");
-    }
-    
-    // Егер сілтемеде болмаса, бос тұрады (кодта сұрақ жоқ)
-    questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
-}
 
 function renderQuestions() {
     let list = document.getElementById('questionsList');
     let total = document.getElementById('totalQuestions');
     
+    localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
+
     if (total) total.innerText = questions.length;
     if (list) {
         list.innerHTML = "";
@@ -60,31 +27,31 @@ function addQuestions() {
     
     if (text !== "") {
         let blocks = text.split(/\n\s*\n/);
+        
         blocks.forEach(block => {
             let trimmedBlock = block.trim();
-            if (trimmedBlock !== "") questions.push(trimmedBlock);
+            if (trimmedBlock !== "") {
+                questions.push(trimmedBlock);
+            }
         });
 
         input.value = "";
         renderQuestions();
-        localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
-        alert("Сұрақтар қосылды!");
+        alert("Сұрақтар базаға сәтті қосылды!");
     } else {
-        alert("Өтініш, сұрақтарды жазыңыз!");
+        alert("Өтініш, сұрақтарды жазыңыз немесе көшіріп қойыңыз!");
     }
 }
 
 function clearAllQuestions() {
     if (confirm("Барлық сұрақтарды өшіргіңіз келе ме?")) {
         questions = [];
-        localStorage.removeItem('my_quiz_questions');
         renderQuestions();
     }
 }
 
 function deleteQuestion(index) {
     questions.splice(index, 1);
-    localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
     renderQuestions();
 }
 
@@ -112,7 +79,7 @@ function renderResults() {
 }
 
 function clearResults() {
-    if (confirm("Нәтижелерді өшіргіңіз келе ме?")) {
+    if (confirm("Барлық оқушы нәтижелерін өшіргіңіз келе ме?")) {
         localStorage.removeItem('student_results');
         renderResults();
     }
@@ -130,13 +97,19 @@ function generateVariants() {
     let qPerVariant = parseInt(qPerVariantInput ? qPerVariantInput.value : 1);
     let testMinutes = parseInt(timeInput ? timeInput.value : 10);
 
-    quizConfig.qCount = qPerVariant;
-    quizConfig.tMinutes = testMinutes;
+    // Мұғалім енгізген нақты сұрақ саны мен минутты міндетті түрде сақтаймыз
+    localStorage.setItem('quiz_q_count', qPerVariant);
+    localStorage.setItem('quiz_time_minutes', testMinutes);
 
     output.innerHTML = "";
 
     if (questions.length === 0) {
-        alert("Алдымен сұрақтарды енгізіңіз!");
+        alert("Базада ешқандай сұрақ жоқ! Алдымен сұрақтарды қосыңыз.");
+        return;
+    }
+
+    if (qPerVariant > questions.length) {
+        alert("Қате: Базада барлығы " + questions.length + " сұрақ қана бар. Сіз " + qPerVariant + " сұрақ сұрап тұрсыз!");
         return;
     }
 
@@ -149,59 +122,24 @@ function generateVariants() {
             html += '<li>' + selected[j].replace(/\*/g, '') + '</li>';
         }
         html += '</ol></div>';
+        
         output.innerHTML += html;
     }
 
     let actionButtons = document.getElementById('actionButtons');
-    if (actionButtons) actionButtons.style.display = "flex";
-
-    // Сұрақтарды басқа телефонда ашу үшін сілтеме жасау
-    generateShareableLink();
-}
-
-function generateShareableLink() {
-    let dataObj = {
-        questions: questions,
-        qCount: quizConfig.qCount,
-        tMinutes: quizConfig.tMinutes
-    };
+    if (actionButtons) {
+        actionButtons.style.display = "flex";
+    }
     
-    let jsonString = JSON.stringify(dataObj);
-    let encodedData = btoa(unescape(encodeURIComponent(jsonString)));
-    
-    let baseUrl = window.location.href.split('?')[0];
-    if (baseUrl.includes('teacher.html')) {
-        baseUrl = baseUrl.replace('teacher.html', 'index.html');
-    } else if (!baseUrl.endsWith('index.html') && !baseUrl.endsWith('/')) {
-        baseUrl += '/index.html';
-    }
-
-    let fullShareLink = baseUrl + '?data=' + encodedData;
-
-    let output = document.getElementById('output');
-    if (output) {
-        output.innerHTML += '<div style="margin-top: 15px; padding: 12px; background: #e8f8f5; border: 1px solid #27ae60; border-radius: 6px;">' +
-                            '<p style="font-weight: bold; color: #27ae60; margin-bottom: 5px;">🔗 Басқа телефонда ашатын ортақ сілтеме:</p>' +
-                            '<input type="text" id="shareLinkInput" value="' + fullShareLink + '" readonly style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff;" onclick="this.select();">' +
-                            '<button type="button" onclick="copyShareLink()" style="margin-top: 8px; background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Сілтемені көшіру 📋</button>' +
-                            '</div>';
-    }
-}
-
-function copyShareLink() {
-    let input = document.getElementById('shareLinkInput');
-    if (input) {
-        input.select();
-        navigator.clipboard.writeText(input.value).then(() => {
-            alert("Сілтеме көшірілді! Мұны басқа телефонға жіберсеңіз, тест бірден ашылады.");
-        });
-    }
+    alert("Мәліметтер сақталды! Оқушылар енді дәл " + qPerVariant + " сұрақ және " + testMinutes + " минут уақыт алады.");
 }
 
 function copyToClipboard() {
     let outputText = document.getElementById('output').innerText;
     navigator.clipboard.writeText(outputText).then(() => {
-        alert("Көшірілді!");
+        alert("Барлық варианттар буферге көшірілді!");
+    }).catch(err => {
+        alert("Көшіру кезінде қате шықты: " + err);
     });
 }
 
@@ -219,39 +157,35 @@ function startInteractiveQuiz() {
     currentStudentName = nameInput ? nameInput.value.trim() : "";
 
     if (currentStudentName === "") {
-        alert("Аты-жөніңізді енгізіңіз!");
+        alert("Өтініш, аты-жөніңізді енгізіңіз!");
         return;
     }
 
-    loadDataFromURL();
+    questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
+
     if (questions.length === 0) {
-        questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
-    }
-
-    if (!questions || questions.length === 0) {
-        alert("Әзірге тест сұрақтары жоқ! Мұғалім берген дұрыс сілтеме арқылы кіріңіз.");
+        alert("Әзірге тест сұрақтары жоқ. Мұғалімнің сұрақ қосуын күтіңіз!");
         return;
     }
 
-    let targetCount = parseInt(localStorage.getItem('quiz_q_count')) || quizConfig.qCount;
-    let targetMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || quizConfig.tMinutes;
+    // Мұғалім панелінен сақталған мәндерді нақтылап оқу
+    let targetCount = parseInt(localStorage.getItem('quiz_q_count')) || 10;
+    let targetMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || 10;
 
+    // Егер базадағы сұрақ саны мұғалім сұрағаннан аз болса, барлық сұрақты аламыз
     let takeCount = Math.min(targetCount, questions.length);
+
     let shuffled = questions.slice().sort(function() { return 0.5 - Math.random(); });
     currentQuizQuestions = shuffled.slice(0, takeCount);
 
     currentQuizIdx = 0;
     quizScore = 0;
     studentAnswers = [];
-    quizTimeLeft = targetMinutes * 60;
+    quizTimeLeft = targetMinutes * 60; // Мұғалім қойған минутты секундқа айналдыру
 
-    let loginBox = document.getElementById('student-login-box');
-    let quizBox = document.getElementById('interactive-quiz-box');
-    let greeting = document.getElementById('student-greeting');
-
-    if (loginBox) loginBox.style.display = 'none';
-    if (quizBox) quizBox.style.display = 'block';
-    if (greeting) greeting.innerText = "Қатысушы: " + currentStudentName;
+    document.getElementById('student-login-box').style.display = 'none';
+    document.getElementById('interactive-quiz-box').style.display = 'block';
+    document.getElementById('student-greeting').innerText = "Қатысушы: " + currentStudentName;
 
     showInteractiveQuestion();
     startQuizTimer();
@@ -262,11 +196,13 @@ function startQuizTimer() {
     clearInterval(quizTimer);
     quizTimer = setInterval(function() {
         quizTimeLeft--;
+        
         let mins = Math.floor(quizTimeLeft / 60);
         let secs = quizTimeLeft % 60;
         if (timerSpan) {
             timerSpan.innerText = mins + " мин " + (secs < 10 ? "0" : "") + secs + " сек";
         }
+
         if (quizTimeLeft <= 0) {
             clearInterval(quizTimer);
             endInteractiveQuiz("Уақыт бітті!");
@@ -277,29 +213,34 @@ function startQuizTimer() {
 function showInteractiveQuestion() {
     if (currentQuizIdx >= currentQuizQuestions.length) {
         clearInterval(quizTimer);
-        endInteractiveQuiz("Тест аяқталды!");
+        endInteractiveQuiz("Тест сәтті аяқталды!");
         return;
     }
 
     let fullText = currentQuizQuestions[currentQuizIdx];
     let lines = fullText.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+    
     let questionTitle = lines[0];
     let options = lines.slice(1);
 
     let container = document.getElementById('quiz-question-container');
-    if (!container) return;
-
+    
     let html = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong> ' + questionTitle + '</p><div style="margin: 15px 0;">';
+
     let correctOptionLetter = "";
 
     options.forEach((opt) => {
         let isCorrect = opt.startsWith('*');
         let cleanOpt = isCorrect ? opt.substring(1).trim() : opt;
         let optLetter = cleanOpt.charAt(0).toUpperCase();
-        if (isCorrect) correctOptionLetter = optLetter;
+        
+        if (isCorrect) {
+            correctOptionLetter = optLetter;
+        }
 
         html += '<label style="display:block; margin-bottom: 8px; cursor:pointer; padding: 8px; background: #fff; border: 1px solid #ccc; border-radius: 4px;">' +
-                '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px;"> ' + cleanOpt + '</label>';
+                '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px;"> ' + 
+                cleanOpt + '</label>';
     });
 
     html += '</div>';
@@ -310,19 +251,26 @@ function showInteractiveQuestion() {
 function nextInteractiveQuestion() {
     let radios = document.getElementsByName('student_answer');
     let selectedVal = "";
+    
     for (let i = 0; i < radios.length; i++) {
-        if (radios[i].checked) { selectedVal = radios[i].value; break; }
+        if (radios[i].checked) {
+            selectedVal = radios[i].value;
+            break;
+        }
     }
 
     if (selectedVal === "") {
-        alert("Жауапты таңдаңыз!");
+        alert("Өтініш, жауаптардың бірін таңдаңыз!");
         return;
     }
 
     let container = document.getElementById('quiz-question-container');
     let correctOpt = container.dataset.correctOption;
+
     let isCorrect = (selectedVal.toUpperCase() === correctOpt.toUpperCase());
-    if (isCorrect) quizScore++;
+    if (isCorrect) {
+        quizScore++;
+    }
 
     studentAnswers.push({
         questionNum: currentQuizIdx + 1,
@@ -353,11 +301,24 @@ function endInteractiveQuiz(message) {
     });
     localStorage.setItem('student_results', JSON.stringify(results));
 
-    if (container) {
-        container.innerHTML = '<div style="text-align: center; padding: 10px;">' +
-                             '<h3>🎉 ' + message + '</h3>' +
-                             '<p style="font-size: 18px; margin-top: 10px;">Сіздің ұпайыңыз:</p>' +
-                             '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
-                             '</div>';
-    }
+    let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
+                     '<h3>🎉 ' + message + '</h3>' +
+                     '<p style="font-size: 18px; margin-top: 10px;">Сіздің жинаған ұпайыңыз:</p>' +
+                     '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
+                     '</div><hr style="margin: 15px 0;"><h4 style="margin-bottom:10px;">Жауаптарды талдау:</h4>' +
+                     '<div style="text-align: left; max-height: 320px; overflow-y: auto;">';
+
+    studentAnswers.forEach((ans) => {
+        let statusColor = ans.isCorrect ? '#27ae60' : '#e74c3c';
+        let statusText = ans.isCorrect ? 'Дұрыс ✅' : 'Қате ❌';
+        
+        reviewHtml += '<div style="background: #fff; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 5px solid ' + statusColor + '; border: 1px solid #ddd;">' +
+                      '<p><strong>' + ans.questionNum + '-сұрақ:</strong></p>' +
+                      '<p style="font-size: 13px; color: #555; white-space: pre-line; margin: 5px 0;">' + ans.questionText.replace(/\*/g, '') + '</p>' +
+                      '<p style="margin-top: 5px; font-size: 14px;">Сіздің жауабыңыз: <strong>' + ans.selected + '</strong> | Дұрыс жауап: <strong>' + ans.correct + '</strong> — <span style="color: ' + statusColor + '; font-weight: bold;">' + statusText + '</span></p>' +
+                      '</div>';
+    });
+
+    reviewHtml += '</div>';
+    container.innerHTML = reviewHtml;
 }
