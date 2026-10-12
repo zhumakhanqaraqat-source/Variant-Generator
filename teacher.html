@@ -13,9 +13,9 @@
         <!-- Сұрақтарды қосу бөлімі -->
         <div class="card no-print">
             <h3>1. Сұрақтар мен тесттерді қосу</h3>
-            <p class="hint">Сұрақтарды Word-тан бірден көшіріп (paste) қойыңыз (Әр сұрақтың арасын бос жолмен бөліңіз):</p>
+            <p class="hint">Сұрақтарды енгізіңіз (Дұрыс жауаптың алдына * қойыңыз, әр сұрақты бос жолмен бөліңіз):</p>
             
-            <textarea id="questionInput" rows="8" placeholder="Мысалы:&#10;&#10;1. Қазақстанның астанасы қай қала?&#10;A) Алматы&#10;B) Астана&#10;C) Шымкент"></textarea>
+            <textarea id="questionInput" rows="8" placeholder="Мысалы:&#10;&#10;1. 2 + 2 = ?&#10;A) 3&#10;*B) 4&#10;C) 5"></textarea>
             
             <button type="button" onclick="addQuestions()">Сұрақтарды базаға қосу</button>
             
@@ -28,14 +28,39 @@
             <ul id="questionsList" class="questions-list"></ul>
         </div>
 
+        <!-- Оқушылардың нәтижелерін көру бөлімі -->
+        <div class="card no-print" style="margin-top: 20px; border: 2px solid #27ae60;">
+            <h3>📊 Оқушылардың тест нәтижелері</h3>
+            <p class="hint">Оқушылар тестті аяқтаған соң олардың ұпайлары осында автоматты түрде шығады:</p>
+            
+            <div style="overflow-x: auto; margin-top: 10px;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;" border="1">
+                    <thead>
+                        <tr style="background: #f2f2f2;">
+                            <th style="padding: 10px;">№</th>
+                            <th style="padding: 10px;">Аты-жөні</th>
+                            <th style="padding: 10px;">Жинаған ұпайы</th>
+                            <th style="padding: 10px;">Тапсырған уақыты</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 10px; color: #77f;">Әзірге нәтижелер жоқ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" onclick="clearResults()" class="btn-clear" style="margin-top: 15px;">Нәтижелерді тазалау 🗑️</button>
+        </div>
+
         <!-- Вариант жасау бөлімі -->
-        <div class="card no-print">
-            <h3>2. Варианттарды генерациялау</h3>
+        <div class="card no-print" style="margin-top: 20px;">
+            <h3>3. Варианттарды генерациялау (Қағаз форматы)</h3>
             <label for="variantCount">Қанша вариант керек?</label>
             <input type="number" id="variantCount" min="1" max="10" value="2">
             
             <label for="questionsPerVariant">Әр вариантта қанша сұрақ болсын?</label>
-            <input type="number" id="questionsPerVariant" min="1" max="10" value="3">
+            <input type="number" id="questionsPerVariant" min="1" max="30" value="10">
 
             <button type="button" onclick="generateVariants()" class="btn-generate">Варианттарды құрастыру</button>
         </div>
