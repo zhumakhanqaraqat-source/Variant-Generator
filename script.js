@@ -104,11 +104,11 @@ function copyToClipboard() {
     });
 }
 
-// --- Оқушыларға арналған интерактивті тест (Толық түзетілген нұсқа) ---
+// --- Оқушыларға арналған интерактивті тест (Түзетілген нұсқа) ---
 let currentQuizQuestions = [];
 let currentQuizIdx = 0;
 let quizScore = 0;
-let studentAnswers = []; // Оқушының берген жауаптарын сақтау үшін
+let studentAnswers = [];
 let quizTimer;
 let quizTimeLeft = 120;
 
@@ -168,11 +168,11 @@ function showInteractiveQuestion() {
     }
 
     let fullText = currentQuizQuestions[currentQuizIdx];
-    let lines = fullText.split('\n');
-    let validLines = lines.filter(l => l.trim() !== "");
+    // Жолдарды дұрыс бөлу (Windows пен Mac форматтарын ескере отырып)
+    let lines = fullText.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
     
-    let questionTitle = validLines[0]; // Сұрақтың өзі
-    let options = validLines.slice(1); // A, B, C, D нұсқалары
+    let questionTitle = lines[0]; // Сұрақтың өзі
+    let options = lines.slice(1); // A, B, C, D нұсқалары
 
     let container = document.getElementById('quiz-question-container');
     
@@ -180,20 +180,17 @@ function showInteractiveQuestion() {
 
     let correctOptionLetter = "";
 
-    options.forEach((opt, idx) => {
-        let trimmedOpt = opt.trim();
-        let isCorrect = trimmedOpt.startsWith('*');
-        let cleanOpt = isCorrect ? trimmedOpt.substring(1).trim() : trimmedOpt;
+    options.forEach((opt) => {
+        let isCorrect = opt.startsWith('*');
+        let cleanOpt = isCorrect ? opt.substring(1).trim() : opt;
         
-        // Әр варианттың әрпін анықтау (A, B, C, D)
-        let letterMatch = cleanOpt.match(/^([A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІі])[\)\.]/);
-        let optLetter = letterMatch ? letterMatch[1].toUpperCase() : String.fromCharCode(65 + idx);
+        let optLetter = cleanOpt.charAt(0).toUpperCase(); // A, B, C немесе D
         
         if (isCorrect) {
             correctOptionLetter = optLetter;
         }
 
-        // Әр вариантқа жеке батырма (radio button) жасау
+        // Әр вариантқа жеке басылатын радиокнопка жасау
         html += '<label style="display:block; margin-bottom: 10px; cursor:pointer; padding: 10px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">' +
                 '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px; transform: scale(1.2);"> ' + 
                 cleanOpt + '</label>';
@@ -208,6 +205,7 @@ function nextInteractiveQuestion() {
     let radios = document.getElementsByName('student_answer');
     let selectedVal = "";
     
+    for (let i = 0; i < radios.link; i++) {} // қатесіз жұмыс істеуі үшін
     for (let i = 0; i < radios.length; i++) {
         if (radios[i].checked) {
             selectedVal = radios[i].value;
@@ -228,7 +226,7 @@ function nextInteractiveQuestion() {
         quizScore++;
     }
 
-    // Оқушының жауабын тізімге сақтап қою (талдау үшін)
+    // Оқушының жауабын соңында тексеру үшін сақтау
     studentAnswers.push({
         questionNum: currentQuizIdx + 1,
         questionText: currentQuizQuestions[currentQuizIdx],
@@ -249,7 +247,7 @@ function endInteractiveQuiz(message) {
 
     let totalQ = currentQuizQuestions.length;
 
-    // Нәтиже мен толық талдауды (ревью) шығару
+    // Нәтиже мен қате-дұрысын көрсететін талдау бөлімі
     let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
                      '<h3>🎉 ' + message + '</h3>' +
                      '<p style="font-size: 18px; margin-top: 10px;">Сіздің жинаған ұпайыңыз:</p>' +
