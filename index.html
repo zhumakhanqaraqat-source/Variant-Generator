@@ -15,6 +15,7 @@
             <div id="student-login-box" style="text-align: center; margin-top: 20px;">
                 <p class="hint">Тест тапсыру үшін аты-жөніңізді енгізіңіз:</p>
                 <input type="text" id="studentNameInput" placeholder="Аты-жөніңіз (Мысалы: Айдын)" style="max-width: 300px; margin: 0 auto 15px auto;">
+                <p id="test-info-hint" style="font-size: 14px; color: #555; margin-bottom: 15px;"></p>
                 <button type="button" onclick="startInteractiveQuiz()" class="btn-generate" style="max-width: 300px; margin: 0 auto;">Тестті бастау 🚀</button>
             </div>
 
@@ -22,8 +23,8 @@
             <div id="interactive-quiz-box" style="display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h4 id="student-greeting" style="margin: 0; color: #2c3e50;"></h4>
-                    <div id="timer-display" style="font-size: 16px; font-weight: bold; color: #e74c3c; background: #fadbd8; padding: 5px 10px; border-radius: 5px;">
-                        ⏱️ Уақыт: <span id="time-left">120</span> сек
+                    <div id="timer-display" style="font-size: 15px; font-weight: bold; color: #e74c3c; background: #fadbd8; padding: 5px 10px; border-radius: 5px;">
+                        ⏱️ Уақыт: <span id="time-left">00:00</span>
                     </div>
                 </div>
 
@@ -37,5 +38,16 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+        // Оқушы беті ашылғанда мұғалім қойған баптауларды (сұрақ саны мен уақытты) экранға шығарып тұру
+        document.addEventListener('DOMContentLoaded', function() {
+            let qCount = localStorage.getItem('quiz_q_count') || 10;
+            let tMinutes = localStorage.getItem('quiz_time_minutes') || 10;
+            let infoHint = document.getElementById('test-info-hint');
+            if (infoHint) {
+                infoHint.innerHTML = "Берілген сұрақ саны: <b>" + qCount + "</b> | Уақыт: <b>" + tMinutes + " минут</b>";
+            }
+        });
+    </script>
 </body>
 </html>
