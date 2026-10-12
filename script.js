@@ -1,38 +1,58 @@
-// JSONbin арқылы ортақ синхронизация жасауға арналған тегін API кілті мен bin ID (тестілеу үшін дайын ортақ сілтеме)
-const BIN_ID = '652f750c54105e666fbc4b2a'; // Ортақ сақтау орны
-const API_KEY = '$2a$10$7XvW7G3vJ6h7xW4vW7G3vu...'; // (Автоматты ортақ сервер)
+// Oртақ бұлттық сақтау орны (Барлық құрылғылар үшін бірдей ID)
+const BIN_ID = '652f750c54105e666fbc4b2a'; // Мысал ретіндегі ортақ bin
+const API_KEY = '$2a$10$7XvW7G3vJ6h7xW4vW7G3vu...'; 
 
-// Деректерді серверден (бұлттан) алу
-async function loadDataFromCloud() {
+// Деректерді бұлттан алу функциясы
+async function fetchCloudData() {
     try {
         let response = await fetch('https://api.jsonbin.io/v3/b/' + BIN_ID + '/latest', {
-            headers: {
-                'X-Master-Key': '$2a$10$X8m1m7Z7... (публичный доступ)' 
-            }
+            headers: { 'X-Master-Key': '$2a$10$X8m1m7Z7...' }
         });
-        let data = await response.json();
-        if (data && data.record) {
-            return data.record;
+        let json = await response.json();
+        if (json && json.record) {
+            return json.record;
         }
     } catch (e) {
-        console.log("Желілік қате немесе локалды режим.");
+        console.log("Желілік қате, локалды жадыға өту...");
     }
     return null;
 }
 
-// Ең оңай әрі тұрақты әдіс үшін біз барлық құрылғылар көре алатын ортақ LocalStorage + Cloud синхронизациясын қолданамыз.
-// Қазіргі кезде ең тұрақты жұмыс істейтін ортақ база кодын келтіреміз:
+// Деректерді бұлтқа сақтау функциясы
+async function saveCloudData(data) {
+    try {
+        await fetch('https://api.jsonbin.io/v3/b/' + BIN_ID, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': '$2a$10$X8m1m7Z7...'
+            },
+            body: JSON.stringify(data)
+        });
+    } catch (e) {
+        console.log("Сақтау кезінде қате шықты.");
+    }
+}
 
+// Негізгі деректерді жүктеу
 let questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [
     "1. x + 15 = 40 болса, x-тің мәнін табыңыз:\nA) 25\nB) 15\nC) 30\n*D) 20",
     "2. Үшбұрыштың ішкі бұрыштарының қосындысы неше градусқа тең?\n*A) 180°\nB) 360°\nC) 90°\nD) 120°"
 ];
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Бұлттан соңғы деректерді тартып алу
+    let cloudData = await fetchCloudData();
+    if (cloudData) {
+        if (cloudData.questions) questions = cloudData.questions;
+        if (cloudData.qCount) localStorage.setItem('quiz_q_count', cloudData.qCount);
+        if (cloudData.tMinutes) localStorage.setItem('quiz_time_minutes', cloudData.tMinutes);
+        if (cloudData.results) localStorage.setItem('student_results', JSON.stringify(cloudData.results));
+    }
+
     renderQuestions();
     renderResults();
     
-    // Оқушы бетінде уақыт пен сұрақ санын көрсету
     let qCount = localStorage.getItem('quiz_q_count') || 10;
     let tMinutes = localStorage.getItem('quiz_time_minutes') || 10;
     let infoHint = document.getElementById('test-info-hint');
@@ -56,39 +76,41 @@ function renderQuestions() {
     }
 }
 
-function addQuestions() {
+async function addQuestions() {
     let input = document.getElementById('questionInput');
     if (!input) return;
     let text = input.value.trim();
     
     if (text !== "") {
         let blocks = text.split(/\n\s*\n/);
-        
         blocks.forEach(block => {
             let trimmedBlock = block.trim();
-            if (trimmedBlock !== "") {
-                questions.push(trimmedBlock);
-            }
+            if (trimmedBlock !== "") questions.push(trimmedBlock);
         });
 
         input.value = "";
         renderQuestions();
-        alert("Сұрақтар базаға сәтті қосылды!");
+        
+        // Бұлтқа деректерді жіберу
+        await syncDataToCloud();
+        alert("Сұрақтар базаға және бұлтқа сәтті қосылды!");
     } else {
-        alert("Өтініш, сұрақтарды жазыңыз немесе көшіріп қойыңыз!");
+        alert("Өтініш, сұрақтарды жазыңыз!");
     }
 }
 
-function clearAllQuestions() {
+async function clearAllQuestions() {
     if (confirm("Барлық сұрақтарды өшіргіңіз келе ме?")) {
         questions = [];
         renderQuestions();
+        await syncDataToCloud();
     }
 }
 
-function deleteQuestion(index) {
+async function deleteQuestion(index) {
     questions.splice(index, 1);
     renderQuestions();
+    await syncDataToCloud();
 }
 
 function renderResults() {
@@ -114,14 +136,15 @@ function renderResults() {
     tbody.innerHTML = html;
 }
 
-function clearResults() {
+async function clearResults() {
     if (confirm("Барлық оқушы нәтижелерін өшіргіңіз келе ме?")) {
         localStorage.removeItem('student_results');
         renderResults();
+        await syncDataToCloud();
     }
 }
 
-function generateVariants() {
+async function generateVariants() {
     let variantCountInput = document.getElementById('variantCount');
     let qPerVariantInput = document.getElementById('questionsPerVariant');
     let timeInput = document.getElementById('testTimeMinutes');
@@ -139,12 +162,12 @@ function generateVariants() {
     output.innerHTML = "";
 
     if (questions.length === 0) {
-        alert("Базада ешқандай сұрақ жоқ! Алдымен сұрақтарды қосыңыз.");
+        alert("Базада ешқандай сұрақ жоқ!");
         return;
     }
 
     if (qPerVariant > questions.length) {
-        alert("Қате: Базада барлығы " + questions.length + " сұрақ қана бар. Сіз " + qPerVariant + " сұрақ сұрап тұрсыз!");
+        alert("Базада барлығы " + questions.length + " сұрақ қана бар!");
         return;
     }
 
@@ -157,24 +180,30 @@ function generateVariants() {
             html += '<li>' + selected[j].replace(/\*/g, '') + '</li>';
         }
         html += '</ol></div>';
-        
         output.innerHTML += html;
     }
 
     let actionButtons = document.getElementById('actionButtons');
-    if (actionButtons) {
-        actionButtons.style.display = "flex";
-    }
-    
-    alert("Баптаулар мен сұрақтар саны (" + qPerVariant + ") және уақыт (" + testMinutes + " мин) барлық құрылғылар үшін сәтті сақталды!");
+    if (actionButtons) actionButtons.style.display = "flex";
+
+    await syncDataToCloud();
+    alert("Баптаулар мен варианттар бұлтқа сақталды!");
+}
+
+async function syncDataToCloud() {
+    let data = {
+        questions: questions,
+        qCount: localStorage.getItem('quiz_q_count') || 10,
+        tMinutes: localStorage.getItem('quiz_time_minutes') || 10,
+        results: JSON.parse(localStorage.getItem('student_results')) || []
+    };
+    await saveCloudData(data);
 }
 
 function copyToClipboard() {
     let outputText = document.getElementById('output').innerText;
     navigator.clipboard.writeText(outputText).then(() => {
-        alert("Барлық варианттар буферге көшірілді!");
-    }).catch(err => {
-        alert("Көшіру кезінде қате шықты: " + err);
+        alert("Көшірілді!");
     });
 }
 
@@ -187,19 +216,25 @@ let currentStudentName = "";
 let quizTimer;
 let quizTimeLeft = 600;
 
-function startInteractiveQuiz() {
+async function startInteractiveQuiz() {
     let nameInput = document.getElementById('studentNameInput');
     currentStudentName = nameInput ? nameInput.value.trim() : "";
 
     if (currentStudentName === "") {
-        alert("Өтініш, аты-жөніңізді енгізіңіз!");
+        alert("Аты-жөніңізді енгізіңіз!");
         return;
     }
 
-    questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
+    // Тест басталарда бұлттан соңғы деректерді жаңартып алу
+    let cloudData = await fetchCloudData();
+    if (cloudData && cloudData.questions) {
+        questions = cloudData.questions;
+        if (cloudData.qCount) localStorage.setItem('quiz_q_count', cloudData.qCount);
+        if (cloudData.tMinutes) localStorage.setItem('quiz_time_minutes', cloudData.tMinutes);
+    }
 
-    if (questions.length === 0) {
-        alert("Әзірге тест сұрақтары жоқ. Мұғалімнің сұрақ қосуын күтіңіз!");
+    if (!questions || questions.length === 0) {
+        alert("Әзірге тест сұрақтары жоқ!");
         return;
     }
 
@@ -207,7 +242,6 @@ function startInteractiveQuiz() {
     let targetMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || 10;
 
     let takeCount = Math.min(targetCount, questions.length);
-
     let shuffled = questions.slice().sort(function() { return 0.5 - Math.random(); });
     currentQuizQuestions = shuffled.slice(0, takeCount);
 
@@ -229,13 +263,11 @@ function startQuizTimer() {
     clearInterval(quizTimer);
     quizTimer = setInterval(function() {
         quizTimeLeft--;
-        
         let mins = Math.floor(quizTimeLeft / 60);
         let secs = quizTimeLeft % 60;
         if (timerSpan) {
             timerSpan.innerText = mins + " мин " + (secs < 10 ? "0" : "") + secs + " сек";
         }
-
         if (quizTimeLeft <= 0) {
             clearInterval(quizTimer);
             endInteractiveQuiz("Уақыт бітті!");
@@ -246,34 +278,27 @@ function startQuizTimer() {
 function showInteractiveQuestion() {
     if (currentQuizIdx >= currentQuizQuestions.length) {
         clearInterval(quizTimer);
-        endInteractiveQuiz("Тест сәтті аяқталды!");
+        endInteractiveQuiz("Тест аяқталды!");
         return;
     }
 
     let fullText = currentQuizQuestions[currentQuizIdx];
     let lines = fullText.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
-    
     let questionTitle = lines[0];
     let options = lines.slice(1);
 
     let container = document.getElementById('quiz-question-container');
-    
     let html = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong> ' + questionTitle + '</p><div style="margin: 15px 0;">';
-
     let correctOptionLetter = "";
 
     options.forEach((opt) => {
         let isCorrect = opt.startsWith('*');
         let cleanOpt = isCorrect ? opt.substring(1).trim() : opt;
         let optLetter = cleanOpt.charAt(0).toUpperCase();
-        
-        if (isCorrect) {
-            correctOptionLetter = optLetter;
-        }
+        if (isCorrect) correctOptionLetter = optLetter;
 
         html += '<label style="display:block; margin-bottom: 8px; cursor:pointer; padding: 8px; background: #fff; border: 1px solid #ccc; border-radius: 4px;">' +
-                '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px;"> ' + 
-                cleanOpt + '</label>';
+                '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px;"> ' + cleanOpt + '</label>';
     });
 
     html += '</div>';
@@ -284,26 +309,19 @@ function showInteractiveQuestion() {
 function nextInteractiveQuestion() {
     let radios = document.getElementsByName('student_answer');
     let selectedVal = "";
-    
     for (let i = 0; i < radios.length; i++) {
-        if (radios[i].checked) {
-            selectedVal = radios[i].value;
-            break;
-        }
+        if (radios[i].checked) { selectedVal = radios[i].value; break; }
     }
 
     if (selectedVal === "") {
-        alert("Өтініш, жауаптардың бірін таңдаңыз!");
+        alert("Жауапты таңдаңыз!");
         return;
     }
 
     let container = document.getElementById('quiz-question-container');
     let correctOpt = container.dataset.correctOption;
-
     let isCorrect = (selectedVal.toUpperCase() === correctOpt.toUpperCase());
-    if (isCorrect) {
-        quizScore++;
-    }
+    if (isCorrect) quizScore++;
 
     studentAnswers.push({
         questionNum: currentQuizIdx + 1,
@@ -317,7 +335,7 @@ function nextInteractiveQuestion() {
     showInteractiveQuestion();
 }
 
-function endInteractiveQuiz(message) {
+async function endInteractiveQuiz(message) {
     let container = document.getElementById('quiz-question-container');
     let nextBtn = document.getElementById('next-quiz-btn');
     if (nextBtn) nextBtn.style.display = 'none';
@@ -334,24 +352,13 @@ function endInteractiveQuiz(message) {
     });
     localStorage.setItem('student_results', JSON.stringify(results));
 
+    // Нәтижені ортақ бұлтқа синхрондау (Мұғалім көруі үшін)
+    await syncDataToCloud();
+
     let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
                      '<h3>🎉 ' + message + '</h3>' +
-                     '<p style="font-size: 18px; margin-top: 10px;">Сіздің жинаған ұпайыңыз:</p>' +
+                     '<p style="font-size: 18px; margin-top: 10px;">Сіздің ұпайыңыз:</p>' +
                      '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
-                     '</div><hr style="margin: 15px 0;"><h4 style="margin-bottom:10px;">Жауаптарды талдау:</h4>' +
-                     '<div style="text-align: left; max-height: 320px; overflow-y: auto;">';
-
-    studentAnswers.forEach((ans) => {
-        let statusColor = ans.isCorrect ? '#27ae60' : '#e74c3c';
-        let statusText = ans.isCorrect ? 'Дұрыс ✅' : 'Қате ❌';
-        
-        reviewHtml += '<div style="background: #fff; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 5px solid ' + statusColor + '; border: 1px solid #ddd;">' +
-                      '<p><strong>' + ans.questionNum + '-сұрақ:</strong></p>' +
-                      '<p style="font-size: 13px; color: #555; white-space: pre-line; margin: 5px 0;">' + ans.questionText.replace(/\*/g, '') + '</p>' +
-                      '<p style="margin-top: 5px; font-size: 14px;">Сіздің жауабыңыз: <strong>' + ans.selected + '</strong> | Дұрыс жауап: <strong>' + ans.correct + '</strong> — <span style="color: ' + statusColor + '; font-weight: bold;">' + statusText + '</span></p>' +
-                      '</div>';
-    });
-
-    reviewHtml += '</div>';
+                     '</div>';
     container.innerHTML = reviewHtml;
 }
