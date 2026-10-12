@@ -1,9 +1,9 @@
 let questions = [];
 let quizConfig = { qCount: 10, tMinutes: 10 };
 
-// Сайт ашылғанда сілтемеден (URL) немесе жадтан сұрақтарды оқып алу
+// Сайт ашылғанда сілтемеден (URL) деректерді оқып алу
 document.addEventListener('DOMContentLoaded', function() {
-    loadDataFromURLOrStorage();
+    loadDataFromURL();
     renderQuestions();
     renderResults();
     
@@ -13,13 +13,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function loadDataFromURLOrStorage() {
+function loadDataFromURL() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const encodedData = urlParams.get('data');
         
         if (encodedData) {
-            // Егер сілтемеде деректер бар болса, соны оқимыз
             const decodedJSON = decodeURIComponent(escape(atob(encodedData)));
             const parsedData = JSON.parse(decodedJSON);
             
@@ -27,28 +26,24 @@ function loadDataFromURLOrStorage() {
             quizConfig.qCount = parsedData.qCount || 10;
             quizConfig.tMinutes = parsedData.tMinutes || 10;
             
-            // Құрылғыда сақтап қоямыз
+            // Телефонның жадында сақтап қоямыз
             localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
             localStorage.setItem('quiz_q_count', quizConfig.qCount);
             localStorage.setItem('quiz_time_minutes', quizConfig.tMinutes);
             return;
         }
     } catch (e) {
-        console.log("Сілтемені оқу кезінде қате кетті.");
+        console.log("Сілтемені оқу қатесі");
     }
     
-    // Егер сілтемеде болмаса, жадтан (localStorage) аламыз
+    // Егер сілтемеде болмаса, бос тұрады (кодта сұрақ жоқ)
     questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
-    quizConfig.qCount = parseInt(localStorage.getItem('quiz_q_count')) || 10;
-    quizConfig.tMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || 10;
 }
 
 function renderQuestions() {
     let list = document.getElementById('questionsList');
     let total = document.getElementById('totalQuestions');
     
-    localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
-
     if (total) total.innerText = questions.length;
     if (list) {
         list.innerHTML = "";
@@ -72,7 +67,8 @@ function addQuestions() {
 
         input.value = "";
         renderQuestions();
-        alert("Сұрақтар базаға қосылды!");
+        localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
+        alert("Сұрақтар қосылды!");
     } else {
         alert("Өтініш, сұрақтарды жазыңыз!");
     }
@@ -81,12 +77,14 @@ function addQuestions() {
 function clearAllQuestions() {
     if (confirm("Барлық сұрақтарды өшіргіңіз келе ме?")) {
         questions = [];
+        localStorage.removeItem('my_quiz_questions');
         renderQuestions();
     }
 }
 
 function deleteQuestion(index) {
     questions.splice(index, 1);
+    localStorage.setItem('my_quiz_questions', JSON.stringify(questions));
     renderQuestions();
 }
 
@@ -114,7 +112,7 @@ function renderResults() {
 }
 
 function clearResults() {
-    if (confirm("Барлық оқушы нәтижелерін өшіргіңіз келе ме?")) {
+    if (confirm("Нәтижелерді өшіргіңіз келе ме?")) {
         localStorage.removeItem('student_results');
         renderResults();
     }
@@ -135,18 +133,10 @@ function generateVariants() {
     quizConfig.qCount = qPerVariant;
     quizConfig.tMinutes = testMinutes;
 
-    localStorage.setItem('quiz_q_count', qPerVariant);
-    localStorage.setItem('quiz_time_minutes', testMinutes);
-
     output.innerHTML = "";
 
     if (questions.length === 0) {
-        alert("Базада ешқандай сұрақ жоқ!");
-        return;
-    }
-
-    if (qPerVariant > questions.length) {
-        alert("Базада барлығы " + questions.length + " сұрақ қана бар!");
+        alert("Алдымен сұрақтарды енгізіңіз!");
         return;
     }
 
@@ -165,7 +155,7 @@ function generateVariants() {
     let actionButtons = document.getElementById('actionButtons');
     if (actionButtons) actionButtons.style.display = "flex";
 
-    // Барлық сұрақтар мен баптауларды сілтемеге қосып дайындау
+    // Сұрақтарды басқа телефонда ашу үшін сілтеме жасау
     generateShareableLink();
 }
 
@@ -179,22 +169,21 @@ function generateShareableLink() {
     let jsonString = JSON.stringify(dataObj);
     let encodedData = btoa(unescape(encodeURIComponent(jsonString)));
     
-    // Сайттың негізгі мекенжайы
-    let baseUrl = window.location.href.split('?')[0].replace('teacher.html', 'index.html');
-    if (!baseUrl.endsWith('index.html') && !baseUrl.endsWith('/')) {
-        baseUrl += '/';
+    let baseUrl = window.location.href.split('?')[0];
+    if (baseUrl.includes('teacher.html')) {
+        baseUrl = baseUrl.replace('teacher.html', 'index.html');
+    } else if (!baseUrl.endsWith('index.html') && !baseUrl.endsWith('/')) {
+        baseUrl += '/index.html';
     }
-    // Егер басқа файл болса негізгі сілтемені алу
-    baseUrl = baseUrl.replace(/\/[^\/]*$/, '/index.html');
 
     let fullShareLink = baseUrl + '?data=' + encodedData;
 
     let output = document.getElementById('output');
     if (output) {
         output.innerHTML += '<div style="margin-top: 15px; padding: 12px; background: #e8f8f5; border: 1px solid #27ae60; border-radius: 6px;">' +
-                            '<p style="font-weight: bold; color: #27ae60; margin-bottom: 5px;">🔗 Оқушыларға арналған ортақ сілтеме:</p>' +
+                            '<p style="font-weight: bold; color: #27ae60; margin-bottom: 5px;">🔗 Басқа телефонда ашатын ортақ сілтеме:</p>' +
                             '<input type="text" id="shareLinkInput" value="' + fullShareLink + '" readonly style="width: 100%; padding: 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; background: #fff;" onclick="this.select();">' +
-                            '<button type="button" onclick="copyShareLink()" style="margin-top: 8px; background: #27ae60; color: #white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; color: white; font-weight: bold;">Сілтемені көшіру 📋</button>' +
+                            '<button type="button" onclick="copyShareLink()" style="margin-top: 8px; background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Сілтемені көшіру 📋</button>' +
                             '</div>';
     }
 }
@@ -204,7 +193,7 @@ function copyShareLink() {
     if (input) {
         input.select();
         navigator.clipboard.writeText(input.value).then(() => {
-            alert("Сілтеме буферге көшірілді! Оны басқа телефондарға жібере аласыз.");
+            alert("Сілтеме көшірілді! Мұны басқа телефонға жіберсеңіз, тест бірден ашылады.");
         });
     }
 }
@@ -212,7 +201,7 @@ function copyShareLink() {
 function copyToClipboard() {
     let outputText = document.getElementById('output').innerText;
     navigator.clipboard.writeText(outputText).then(() => {
-        alert("Варианттар көшірілді!");
+        alert("Көшірілді!");
     });
 }
 
@@ -234,26 +223,35 @@ function startInteractiveQuiz() {
         return;
     }
 
-    // Деректерді қайта тексеріп алу
-    loadDataFromURLOrStorage();
+    loadDataFromURL();
+    if (questions.length === 0) {
+        questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
+    }
 
     if (!questions || questions.length === 0) {
         alert("Әзірге тест сұрақтары жоқ! Мұғалім берген дұрыс сілтеме арқылы кіріңіз.");
         return;
     }
 
-    let takeCount = Math.min(quizConfig.qCount, questions.length);
+    let targetCount = parseInt(localStorage.getItem('quiz_q_count')) || quizConfig.qCount;
+    let targetMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || quizConfig.tMinutes;
+
+    let takeCount = Math.min(targetCount, questions.length);
     let shuffled = questions.slice().sort(function() { return 0.5 - Math.random(); });
     currentQuizQuestions = shuffled.slice(0, takeCount);
 
     currentQuizIdx = 0;
     quizScore = 0;
     studentAnswers = [];
-    quizTimeLeft = quizConfig.tMinutes * 60;
+    quizTimeLeft = targetMinutes * 60;
 
-    document.getElementById('student-login-box').style.display = 'none';
-    document.getElementById('interactive-quiz-box').style.display = 'block';
-    document.getElementById('student-greeting').innerText = "Қатысушы: " + currentStudentName;
+    let loginBox = document.getElementById('student-login-box');
+    let quizBox = document.getElementById('interactive-quiz-box');
+    let greeting = document.getElementById('student-greeting');
+
+    if (loginBox) loginBox.style.display = 'none';
+    if (quizBox) quizBox.style.display = 'block';
+    if (greeting) greeting.innerText = "Қатысушы: " + currentStudentName;
 
     showInteractiveQuestion();
     startQuizTimer();
@@ -289,6 +287,8 @@ function showInteractiveQuestion() {
     let options = lines.slice(1);
 
     let container = document.getElementById('quiz-question-container');
+    if (!container) return;
+
     let html = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong> ' + questionTitle + '</p><div style="margin: 15px 0;">';
     let correctOptionLetter = "";
 
@@ -353,10 +353,11 @@ function endInteractiveQuiz(message) {
     });
     localStorage.setItem('student_results', JSON.stringify(results));
 
-    let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
-                     '<h3>🎉 ' + message + '</h3>' +
-                     '<p style="font-size: 18px; margin-top: 10px;">Сіздің ұпайыңыз:</p>' +
-                     '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
-                     '</div>';
-    container.innerHTML = reviewHtml;
+    if (container) {
+        container.innerHTML = '<div style="text-align: center; padding: 10px;">' +
+                             '<h3>🎉 ' + message + '</h3>' +
+                             '<p style="font-size: 18px; margin-top: 10px;">Сіздің ұпайыңыз:</p>' +
+                             '<p style="font-size: 32px; font-weight: bold; color: #27ae60;">' + quizScore + ' / ' + totalQ + '</p>' +
+                             '</div>';
+    }
 }
