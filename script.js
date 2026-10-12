@@ -2,6 +2,7 @@ let questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
 
 document.addEventListener('DOMContentLoaded', function() {
     renderQuestions();
+    renderResults();
 });
 
 function renderQuestions() {
@@ -54,6 +55,37 @@ function deleteQuestion(index) {
     renderQuestions();
 }
 
+// Мұғалім панеліндегі нәтижелерді көрсету
+function renderResults() {
+    let tbody = document.getElementById('resultsTableBody');
+    if (!tbody) return;
+
+    let results = JSON.parse(localStorage.getItem('student_results')) || [];
+
+    if (results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 10px; color: #777;">Әзірге нәтижелер жоқ</td></tr>';
+        return;
+    }
+
+    let html = '';
+    results.forEach((res, idx) => {
+        html += '<tr>' +
+                '<td style="padding: 8px;">' + (idx + 1) + '</td>' +
+                '<td style="padding: 8px;"><strong>' + res.name + '</strong></td>' +
+                '<td style="padding: 8px; color: #27ae60; font-weight: bold;">' + res.score + ' / ' + res.total + '</td>' +
+                '<td style="padding: 8px; font-size: 13px; color: #555;">' + res.date + '</td>' +
+                '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function clearResults() {
+    if (confirm("Барлық оқушы нәтижелерін өшіргіңіз келе ме?")) {
+        localStorage.removeItem('student_results');
+        renderResults();
+    }
+}
+
 function generateVariants() {
     let variantCountInput = document.getElementById('variantCount');
     let qPerVariantInput = document.getElementById('questionsPerVariant');
@@ -104,19 +136,20 @@ function copyToClipboard() {
     });
 }
 
-// --- Оқушыларға арналған интерактивті тест (Дұрыс бөлінген нұсқа) ---
+// --- Оқушыларға арналған интерактивті тест ---
 let currentQuizQuestions = [];
 let currentQuizIdx = 0;
 let quizScore = 0;
 let studentAnswers = [];
+let currentStudentName = "";
 let quizTimer;
-let quizTimeLeft = 120;
+let quizTimeLeft = 300; // 30 сұраққа уақытты көбірек береміз (5 минут)
 
 function startInteractiveQuiz() {
     let nameInput = document.getElementById('studentNameInput');
-    let studentName = nameInput ? nameInput.value.trim() : "";
+    currentStudentName = nameInput ? nameInput.value.trim() : "";
 
-    if (studentName === "") {
+    if (currentStudentName === "") {
         alert("Өтініш, аты-жөніңізді енгізіңіз!");
         return;
     }
@@ -128,19 +161,17 @@ function startInteractiveQuiz() {
         return;
     }
 
+    // Барлық сұрақтарды кездейсоқ ретпен аламыз (шектеуді алып тастадық)
     currentQuizQuestions = questions.slice().sort(function() { return 0.5 - Math.random(); });
-    if (currentQuizQuestions.length > 5) {
-        currentQuizQuestions = currentQuizQuestions.slice(0, 5);
-    }
 
     currentQuizIdx = 0;
     quizScore = 0;
     studentAnswers = [];
-    quizTimeLeft = 120;
+    quizTimeLeft = currentQuizQuestions.length * 20; // Әр сұраққа 20 секундтан
 
     document.getElementById('student-login-box').style.display = 'none';
     document.getElementById('interactive-quiz-box').style.display = 'block';
-    document.getElementById('student-greeting').innerText = "Қатысушы: " + studentName;
+    document.getElementById('student-greeting').innerText = "Қатысушы: " + currentStudentName;
 
     showInteractiveQuestion();
     startQuizTimer();
@@ -170,8 +201,8 @@ function showInteractiveQuestion() {
     let fullText = currentQuizQuestions[currentQuizIdx];
     let lines = fullText.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
     
-    let questionTitle = lines[0]; // Сұрақтың өзі
-    let options = lines.slice(1); // A, B, C, D нұсқалары
+    let questionTitle = lines[0];
+    let options = lines.slice(1);
 
     let container = document.getElementById('quiz-question-container');
     
@@ -182,14 +213,12 @@ function showInteractiveQuestion() {
     options.forEach((opt) => {
         let isCorrect = opt.startsWith('*');
         let cleanOpt = isCorrect ? opt.substring(1).trim() : opt;
-        
-        let optLetter = cleanOpt.charAt(0).toUpperCase(); // A, B, C, D
+        let optLetter = cleanOpt.charAt(0).toUpperCase();
         
         if (isCorrect) {
             correctOptionLetter = optLetter;
         }
 
-        // Әр вариантты жеке басылатын радиокнопка етіп шығару
         html += '<label style="display:block; margin-bottom: 8px; cursor:pointer; padding: 8px; background: #fff; border: 1px solid #ccc; border-radius: 4px;">' +
                 '<input type="radio" name="student_answer" value="' + optLetter + '" style="margin-right: 10px;"> ' + 
                 cleanOpt + '</label>';
@@ -244,6 +273,17 @@ function endInteractiveQuiz(message) {
 
     let totalQ = currentQuizQuestions.length;
 
+    // Нәтижені localStorage-қа сақтау (Мұғалім көруі үшін)
+    let results = JSON.parse(localStorage.getItem('student_results')) || [];
+    results.push({
+        name: currentStudentName,
+        score: quizScore,
+        total: totalQ,
+        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
+    });
+    localStorage.setItem('student_results', JSON.stringify(results));
+
+    // Оқушыға нәтиже мен талдауды көрсету
     let reviewHtml = '<div style="text-align: center; padding: 10px;">' +
                      '<h3>🎉 ' + message + '</h3>' +
                      '<p style="font-size: 18px; margin-top: 10px;">Сіздің жинаған ұпайыңыз:</p>' +
