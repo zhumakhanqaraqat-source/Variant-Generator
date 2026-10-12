@@ -21,11 +21,7 @@ function renderQuestions() {
 
 function addQuestions() {
     let input = document.getElementById('questionInput');
-    if (!input) {
-        alert("Қате: questionInput табылмады!");
-        return;
-    }
-    
+    if (!input) return;
     let text = input.value.trim();
     
     if (text !== "") {
@@ -106,4 +102,101 @@ function copyToClipboard() {
     }).catch(err => {
         alert("Көшіру кезінде қате шықты: " + err);
     });
+}
+
+// --- Оқушыларға арналған интерактивті тест режимі (Балл және нұсқалармен) ---
+let currentQuizQuestions = [];
+let currentQuizIdx = 0;
+let quizScore = 0;
+let quizTimer;
+let quizTimeLeft = 120; // 2 минут
+
+function startInteractiveQuiz() {
+    let nameInput = document.getElementById('studentNameInput');
+    let studentName = nameInput ? nameInput.value.trim() : "";
+
+    if (studentName === "") {
+        alert("Өтініш, аты-жөніңізді енгізіңіз!");
+        return;
+    }
+
+    questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
+
+    if (questions.length === 0) {
+        alert("Әзірге тест сұрақтары жоқ. Мұғалімнің сұрақ қосуын күтіңіз!");
+        return;
+    }
+
+    document.getElementById('student-login-box').style.display = 'none';
+    document.getElementById('interactive-quiz-box').style.display = 'block';
+    document.getElementById('student-greeting').innerText = "Қатысушы: " + studentName;
+
+    currentQuizQuestions = questions.slice().sort(function() { return 0.5 - Math.random(); });
+    if (currentQuizQuestions.length > 5) {
+        currentQuizQuestions = currentQuizQuestions.slice(0, 5); // Көп болса 5 сұрақ алу
+    }
+
+    currentQuizIdx = 0;
+    quizScore = 0;
+    quizTimeLeft = 120;
+
+    showInteractiveQuestion();
+    startQuizTimer();
+}
+
+function startQuizTimer() {
+    let timerSpan = document.getElementById('time-left');
+    clearInterval(quizTimer);
+    quizTimer = setInterval(function() {
+        quizTimeLeft--;
+        if (timerSpan) timerSpan.innerText = quizTimeLeft;
+
+        if (quizTimeLeft <= 0) {
+            clearInterval(quizTimer);
+            endInteractiveQuiz("Уақыт бітті!");
+        }
+    }, 1000);
+}
+
+function showInteractiveQuestion() {
+    if (currentQuizIdx >= currentQuizQuestions.length) {
+        clearInterval(quizTimer);
+        endInteractiveQuiz("Тест сәтті аяқталды!");
+        return;
+    }
+
+    let fullText = currentQuizQuestions[currentQuizIdx];
+    let container = document.getElementById('quiz-question-container');
+    
+    // Сұрақ пен варианттарды бөліп алу (немесе тұтас көрсетіп, астына интерактивті батырмалар қою)
+    container.innerHTML = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong></p>' +
+                          '<div style="white-space: pre-line; margin-bottom: 15px;">' + fullText + '</div>' +
+                          '<div style="margin-top: 10px;">' +
+                              '<label style="display:block; margin-bottom: 5px; cursor:pointer;"><input type="radio" name="answer" value="A"> Жауапты белгілеу / Өту</label>' +
+                          '</div>';
+}
+
+function nextInteractiveQuestion() {
+    // Оқушы жауап берген сайын балл қосу (интерактивті қадам)
+    quizScore++; 
+    currentQuizIdx++;
+    showInteractiveQuestion();
+}
+
+function endInteractiveQuiz(message) {
+    let container = document.getElementById('quiz-question-container');
+    let nextBtn = document.getElementById('next-quiz-btn');
+    if (nextBtn) nextBtn.style.display = 'none';
+    clearInterval(quizTimer);
+
+    let totalQ = currentQuizQuestions.length;
+    // Жиналған баллды есептеу
+    let finalScore = quizScore > totalQ ? totalQ : quizScore;
+
+    container.innerHTML = '<div style="text-align: center; padding: 20px;">' +
+                          '<h3>🎉 ' + message + '</h3>' +
+                          '<p style="font-size: 18px; margin-top: 15px;">Сіздің жинаған ұпайыңыз:</p>' +
+                          '<p style="font-size: 28px; font-weight: bold; color: #27ae60;">' + finalScore + ' / ' + totalQ + '</p>' +
+                          '<p class="hint" style="margin-top: 15px;">Тестті аяқтағаныңызға рақмет!</p>' +
+                          '</div>';
 }
