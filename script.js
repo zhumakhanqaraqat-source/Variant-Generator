@@ -14,14 +14,18 @@ function renderQuestions() {
     if (list) {
         list.innerHTML = "";
         for (let i = 0; i < questions.length; i++) {
-            list.innerHTML += '<li><div class="question-text"><strong>' + (i + 1) + '.</strong> ' + questions[i] + '</div> <button class="btn-delete" onclick="deleteQuestion(' + i + ')">Өшіру 🗑️</button></li>';
+            list.innerHTML += '<li><div class="question-text"><strong>' + (i + 1) + '.</strong> ' + questions[i] + '</div> <button type="button" class="btn-delete" onclick="deleteQuestion(' + i + ')">Өшіру 🗑️</button></li>';
         }
     }
 }
 
 function addQuestions() {
     let input = document.getElementById('questionInput');
-    if (!input) return;
+    if (!input) {
+        alert("Қате: questionInput табылмады!");
+        return;
+    }
+    
     let text = input.value.trim();
     
     if (text !== "") {
@@ -102,85 +106,4 @@ function copyToClipboard() {
     }).catch(err => {
         alert("Көшіру кезінде қате шықты: " + err);
     });
-}
-
-// --- Оқушыларға арналған интерактивті тест режимі ---
-let currentQuizQuestions = [];
-let currentQuizIdx = 0;
-let quizTimer;
-let quizTimeLeft = 120;
-
-function startInteractiveQuiz() {
-    let nameInput = document.getElementById('studentNameInput');
-    let studentName = nameInput ? nameInput.value.trim() : "";
-
-    if (studentName === "") {
-        alert("Өтініш, аты-жөніңізді енгізіңіз!");
-        return;
-    }
-
-    questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
-
-    if (questions.length === 0) {
-        alert("Әзірге тест сұрақтары жоқ. Мұғалімнің сұрақ қосуын күтіңіз!");
-        return;
-    }
-
-    document.getElementById('student-login-box').style.display = 'none';
-    document.getElementById('interactive-quiz-box').style.display = 'block';
-    document.getElementById('student-greeting').innerText = "Қатысушы: " + studentName;
-
-    currentQuizQuestions = questions.slice().sort(function() { return 0.5 - Math.random(); });
-    if (currentQuizQuestions.length > 5) {
-        currentQuizQuestions = currentQuizQuestions.slice(0, 5);
-    }
-
-    currentQuizIdx = 0;
-    quizTimeLeft = 120;
-
-    showInteractiveQuestion();
-    startQuizTimer();
-}
-
-function startQuizTimer() {
-    let timerSpan = document.getElementById('time-left');
-    clearInterval(quizTimer);
-    quizTimer = setInterval(function() {
-        quizTimeLeft--;
-        if (timerSpan) timerSpan.innerText = quizTimeLeft;
-
-        if (quizTimeLeft <= 0) {
-            clearInterval(quizTimer);
-            endInteractiveQuiz("Уақыт бітті!");
-        }
-    }, 1000);
-}
-
-function showInteractiveQuestion() {
-    if (currentQuizIdx >= currentQuizQuestions.length) {
-        clearInterval(quizTimer);
-        endInteractiveQuiz("Тест сәтті аяқталды!");
-        return;
-    }
-
-    let qBlock = currentQuizQuestions[currentQuizIdx];
-    let container = document.getElementById('quiz-question-container');
-    
-    container.innerHTML = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong></p>' +
-                          '<div style="white-space: pre-line; margin-bottom: 15px;">' + qBlock + '</div>';
-}
-
-function nextInteractiveQuestion() {
-    currentQuizIdx++;
-    showInteractiveQuestion();
-}
-
-function endInteractiveQuiz(message) {
-    let container = document.getElementById('quiz-question-container');
-    let nextBtn = document.getElementById('next-quiz-btn');
-    if (nextBtn) nextBtn.style.display = 'none';
-    clearInterval(quizTimer);
-
-    container.innerHTML = '<h3>🎉 ' + message + '</h3>' +
-                          '<p>Барлық сұрақтар қаралып шықты. Қатысқаныңызға рақмет!</p>';
 }
