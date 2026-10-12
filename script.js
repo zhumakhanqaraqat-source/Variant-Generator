@@ -41,6 +41,13 @@ function addQuestions() {
     }
 }
 
+function clearAllQuestions() {
+    if (confirm("Барлық сұрақтарды өшіргіңіз келе ме?")) {
+        questions = [];
+        renderQuestions();
+    }
+}
+
 function deleteQuestion(index) {
     questions.splice(index, 1);
     renderQuestions();
@@ -85,4 +92,96 @@ function generateVariants() {
     if (actionButtons) {
         actionButtons.style.display = "flex";
     }
+}
+
+function copyToClipboard() {
+    let outputText = document.getElementById('output').innerText;
+    navigator.clipboard.writeText(outputText).then(() => {
+        alert("Барлық варианттар буферге көшірілді!");
+    }).catch(err => {
+        alert("Көшіру кезінде қате шықты: " + err);
+    });
+}
+
+// --- Интерактивті тест режимі және таймер логикасы ---
+let currentQuizQuestions = [];
+let currentQuizIdx = 0;
+let quizScore = 0;
+let quizTimer;
+let quizTimeLeft = 120; // 2 минут (секундпен)
+
+function startInteractiveQuiz() {
+    let nameInput = document.getElementById('studentNameInput');
+    let studentName = nameInput ? nameInput.value.trim() : "";
+
+    if (studentName === "") {
+        alert("Өтініш, аты-жөніңізді енгізіңіз!");
+        return;
+    }
+
+    if (questions.length === 0) {
+        alert("Әзірге базада сұрақтар жоқ! Мұғалім алдымен сұрақтарды қосуы керек.");
+        return;
+    }
+
+    // Тіркелу экранын жасырып, тест экранын ашу
+    document.getElementById('student-login-box').style.display = 'none';
+    document.getElementById('interactive-quiz-box').style.display = 'block';
+    document.getElementById('student-greeting').innerText = "Қатысушы: " + studentName;
+
+    // Сұрақтарды кездейсоқ араластырып алу
+    currentQuizQuestions = questions.slice().sort(function() { return 0.5 - Math.random(); });
+    if (currentQuizQuestions.length > 5) {
+        currentQuizQuestions = currentQuizQuestions.slice(0, 5); // 5 сұрақ алу
+    }
+
+    currentQuizIdx = 0;
+    quizScore = 0;
+    quizTimeLeft = 120;
+
+    showInteractiveQuestion();
+    startQuizTimer();
+}
+
+function startQuizTimer() {
+    let timerSpan = document.getElementById('time-left');
+    clearInterval(quizTimer);
+    quizTimer = setInterval(function() {
+        quizTimeLeft--;
+        if (timerSpan) timerSpan.innerText = quizTimeLeft;
+
+        if (quizTimeLeft <= 0) {
+            clearInterval(quizTimer);
+            endInteractiveQuiz("Уақыт бітті!");
+        }
+    }, 1000);
+}
+
+function showInteractiveQuestion() {
+    if (currentQuizIdx >= currentQuizQuestions.length) {
+        clearInterval(quizTimer);
+        endInteractiveQuiz("Тест сәтті аяқталды!");
+        return;
+    }
+
+    let qBlock = currentQuizQuestions[currentQuizIdx];
+    let container = document.getElementById('quiz-question-container');
+    
+    container.innerHTML = '<p><strong>' + (currentQuizIdx + 1) + '-сұрақ:</strong></p>' +
+                          '<div style="white-space: pre-line; margin-bottom: 15px;">' + qBlock + '</div>';
+}
+
+function nextInteractiveQuestion() {
+    currentQuizIdx++;
+    showInteractiveQuestion();
+}
+
+function endInteractiveQuiz(message) {
+    let container = document.getElementById('quiz-question-container');
+    let nextBtn = document.getElementById('next-quiz-btn');
+    if (nextBtn) nextBtn.style.display = 'none';
+    clearInterval(quizTimer);
+
+    container.innerHTML = '<h3>🎉 ' + message + '</h3>' +
+                          '<p>Барлық сұрақтар қаралып шықты. Қатысқаныңызға рақмет!</p>';
 }
