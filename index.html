@@ -3,45 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Интерактивті Тест - Оқушы режимі</title>
+    <title>Мұғалім мен Оқушы Порталы</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container" style="margin-top: 50px;">
-        <div class="card" style="border: 2px solid #3498db;">
-            <h2 style="text-align: center;">🎓 Онлайн Тестілеу жүйесі</h2>
-            
-            <!-- 1. Тіркелу экраны -->
-            <div id="student-login-box" style="text-align: center; margin-top: 20px;">
-                <p class="hint">Тест тапсыру үшін аты-жөніңізді енгізіңіз:</p>
-                <input type="text" id="studentNameInput" placeholder="Аты-жөніңіз (Мысалы: Айдын)" style="max-width: 300px; margin: 0 auto 15px auto;">
-                <p id="test-info-hint" style="font-size: 14px; color: #555; margin-bottom: 15px;"></p>
-                <button type="button" onclick="startInteractiveQuiz()" class="btn-generate" style="max-width: 300px; margin: 0 auto;">Тестті бастау 🚀</button>
-            </div>
+    <!-- Навигациялық Панель (Мәзір) -->
+    <header class="app-header no-print" style="background: #2c3e50; color: white; padding: 15px 20px; text-align: center; border-radius: 0 0 10px 10px; margin-bottom: 20px;">
+        <h1 style="margin: 0; color: white; font-size: 24px;">🎓 Мұғалім мен Оқушы Интерактивті Платформасы</h1>
+        <nav class="nav-tabs" style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+            <button class="nav-btn active" onclick="switchTab('dashboard-tab')" style="width: auto; font-size: 14px;">🏠 Басты панель</button>
+            <button class="nav-btn" onclick="switchTab('game-tab')" style="width: auto; font-size: 14px;">🎮 Ойын құрастыру</button>
+            <button class="nav-btn" onclick="switchTab('test-gen-tab')" style="width: auto; font-size: 14px;">📄 Оффлайн Тест & Варианттар</button>
+            <button class="nav-btn" onclick="switchTab('grouping-tab')" style="width: auto; font-size: 14px;">👥 Оқушыны топқа бөлу</button>
+            <button class="nav-btn" onclick="switchTab('student-quiz-tab')" style="width: auto; font-size: 14px;">🎓 Оқушы режимі (Тест)</button>
+        </nav>
+    </header>
 
-            <!-- 2. Тест өту экраны -->
-            <div id="interactive-quiz-box" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h4 id="student-greeting" style="margin: 0; color: #2c3e50;"></h4>
-                    <div id="timer-display" style="font-size: 15px; font-weight: bold; color: #e74c3c; background: #fadbd8; padding: 5px 10px; border-radius: 5px;">
-                        ⏱️ Уақыт: <span id="time-left">00:00</span>
+    <div class="container">
+
+        <!-- 1. БАСТЫ ПАНЕЛЬ (DASHBOARD) -->
+        <div id="dashboard-tab" class="tab-content active-content no-print">
+            <div class="card">
+                <h2>📌 Басты басқару панелі</h2>
+                <p class="hint">Сабақты қызықты әрі тиімді ұйымдастыру үшін қажетті бөлімді таңдаңыз:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 15px;">
+                    <div class="card" style="border: 2px solid #2ecc71; cursor: pointer; margin: 0; transition: 0.2s;" onclick="switchTab('game-tab')">
+                        <h3>🎮 Ойын құрастырғыш</h3>
+                        <p class="hint">Сабаққа арналған мини-викториналар құру.</p>
+                    </div>
+                    <div class="card" style="border: 2px solid #e67e22; cursor: pointer; margin: 0; transition: 0.2s;" onclick="switchTab('test-gen-tab')">
+                        <h3>📄 Оффлайн Тест</h3>
+                        <p class="hint">Сұрақтар базасы, варианттар генераторы және нәтижелер.</p>
+                    </div>
+                    <div class="card" style="border: 2px solid #9b59b6; cursor: pointer; margin: 0; transition: 0.2s;" onclick="switchTab('grouping-tab')">
+                        <h3>👥 Оқушыны топқа бөлу</h3>
+                        <p class="hint">Кездейсоқ және кезектілік әдістерімен топтастыру.</p>
+                    </div>
+                    <div class="card" style="border: 2px solid #3498db; cursor: pointer; margin: 0; transition: 0.2s;" onclick="switchTab('student-quiz-tab')">
+                        <h3>🎓 Оқушы режимі</h3>
+                        <p class="hint">Оқушылардың таймер арқылы тест тапсыруы.</p>
                     </div>
                 </div>
-
-                <div id="quiz-question-container" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 15px;">
-                    <!-- Сұрақтар мен нұсқалар осында шығады -->
-                </div>
-
-                <button type="button" onclick="nextInteractiveQuestion()" class="btn-generate" id="next-quiz-btn">Келесі сұрақ</button>
             </div>
         </div>
+
+        <!-- 2. ОЙЫН ҚҰРАСТЫРАТЫН БӨЛІМ -->
+        <div id="game-tab" class="tab-content no-print" style="display: none;">
+            <div class="card">
+                <h2>🎮 Интерактивті ойын құрастырғыш</h2>
+                <p class="hint">Сабақта қолданылатын сұрақ-жауап ойындарын ұйымдастырыңыз:</p>
+                
+                <input type="text" id="gameTitle" placeholder="Ойын тақырыбы (Мысалы: Зерде викторинасы)" style="width:100%; padding:10px; margin-bottom:12px; box-sizing:border-box; border: 1px solid #ccc; border-radius: 5px;">
+                
+                <div id="game-questions-container">
+                    <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+                        <input type="text" class="g-q-input" placeholder="1-сұрақ" style="flex: 2; padding:8px; border: 1px solid #ccc; border-radius: 5px;">
+                        <input type="text" class="g-a-input" placeholder="Дұрыс жауабы" style="flex: 1; padding:8px; border: 1px solid #ccc; border-radius: 5px;">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" onclick="addGameField()" style="background:#95a5a6; width: auto;">+ Сұрақ қосу</button>
+                    <button type="button" class="btn-generate" onclick="startGameSession()" style="width: auto;">Ойынды бастау 🚀</button>
+                </div>
+
+                <div id="gameShowcase" style="display:none; margin-top: 20px; padding: 20px; background: #eef9f1; border-radius: 8px; border: 1px solid #2ecc71;">
+                    <h3 id="displayGameTitle" style="color: #27ae60; margin-top:0;"></h3>
+                    <div id="gameQuestionBox" style="font-size: 18px; font-weight: bold; margin: 15px 0;"></div>
+                    <p id="gameAnswerBox" style="font-size: 16px; color: #2980b9; display: none; font-weight: bold;"></p>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button type="button" onclick="toggleGameAnswer()" style="background:#e67e22; width:auto;">👁️ Жауапты көрсету</button>
+                        <button type="button" class="btn-generate" onclick="nextGameCard()" style="width:auto;">Келесі сұрақ ➡️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ОФФЛАЙН ТЕСТ ЖӘНЕ ВАРИАНТ ГЕНЕРАТОРЫ (МҰҒАЛІМ ПАНЕЛІ) -->
+        <div id="test-gen-tab" class="tab-content" style="display: none;">
+            <h1 class="no-print">📝 Мұғалім панелі: Вариант Генераторы</h1>
+            
+            <div class="card no-print">
+                <h3>1. Сұрақтарды базаға қосу</h3>
+                <p class="hint">Сұрақтарды енгізіңіз (Дұрыс жауаптың алдына * қойыңыз, әр сұрақты бос жолмен бөліңіз):</p>
+                <textarea id="questionInput" rows="8" placeholder="Мысалы:&#10;&#10;Қазақстанның астанасы қай қала?&#10;A) Алматы&#10;*B) Астана&#10;C) Шымкент"></textarea>
+                <button type="button" onclick="addQuestions()">Сұрақтарды базаға қосу ➕</button>
+                
+                <div class="list-header">
+                    <p>Базадағы сұрақтар саны: <strong id="totalQuestions">0</strong></p>
+                    <button type="button" onclick="clearAllQuestions()" class="btn-clear">Базаны тазалау 🗑️</button>
+                </div>
+                
+                <h4>Базадағы сұрақтар тізімі:</h4>
+                <ul id="questionsList" class="questions-list"></ul>
+            </div>
+
+            <div class="card no-print" style="margin-top: 20px;">
+                <h3>2. Тест баптаулары (Оқушылар үшін)</h3>
+                <label for="variantCount">Қанша вариант керек?</label>
+                <input type="number" id="variantCount" min="1" max="10" value="2">
+                
+                <label for="questionsPerVariant">Әр варианттағы сұрақ саны:</label>
+                <input type="number" id="questionsPerVariant" min="1" max="50" value="5">
+
+                <label for="testTimeMinutes">Тест уақыты (минутпен):</label>
+                <input type="number" id="testTimeMinutes" min="1" max="120" value="10">
+
+                <button type="button" onclick="generateVariants()" class="btn-generate">Баптауларды сақтау және варианттарды құру 🎲</button>
+            </div>
+
+            <div class="card no-print" style="margin-top: 20px; border: 2px solid #27ae60;">
+                <h3>📊 Оқушылардың тест нәтижелері</h3>
+                <div style="overflow-x: auto; margin-top: 10px;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;" border="1">
+                        <thead>
+                            <tr style="background: #f2f2f2;">
+                                <th style="padding: 10px;">№</th>
+                                <th style="padding: 10px;">Аты-жөні</th>
+                                <th style="padding: 10px;">Жинаған ұпайы</th>
+                                <th style="padding: 10px;">Тапсырған уақыты</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 10px; color: #777;">Әзірге нәтижелер жоқ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" onclick="clearResults()" class="btn-clear" style="margin-top: 15px;">Нәтижелерді тазалау 🗑️</button>
+            </div>
+
+            <div id="actionButtons" class="action-buttons no-print" style="display: none; margin-top: 20px;">
+                <button type="button" onclick="window.print()" class="btn-print">🖨️ Печать / PDF сақтау</button>
+                <button type="button" onclick="copyToClipboard()" class="btn-copy">📋 Барлық вариантты көшіру</button>
+            </div>
+
+            <div id="output" class="output-section"></div>
+        </div>
+
+        <!-- 4. ОҚУШЫЛАРДЫ ТОПҚА БӨЛУ БӨЛІМІ -->
+        <div id="grouping-tab" class="tab-content no-print" style="display: none;">
+            <div class="card">
+                <h2>👥 Оқушыларды топқа бөлу әдістері</h2>
+                <p class="hint">Сынып оқушыларының тізімін енгізіңіз (әр оқушыны жаңа жолға жазыңыз):</p>
+                <textarea id="studentsListInput" rows="6" placeholder="Айдын&#10;Аружан&#10;Бекзат&#10;Динара&#10;Ерасыл&#10;Жансая"></textarea>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label class="hint">Топ саны:</label>
+                        <input type="number" id="groupCount" value="2" min="2" max="10">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="hint">Бөлу тәсілі:</label>
+                        <select id="groupMethod" style="width: 100%; padding: 10px; margin: 8px 0 15px 0; border: 1px solid #ccc; border-radius: 5px; font-family: inherit;">
+                            <option value="random">🎲 Кездейсоқ (Рандом)</option>
+                            <option value="sequential">🔢 Кезектік ретпен (1-2-3)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" class="btn-generate" onclick="divideIntoGroups()">Топтарға бөлу 👥</button>
+                <div id="groupsResultArea" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <!-- 5. ОҚУШЫ РЕЖИМІ (ТЕСТ ТАПСЫРУ) -->
+        <div id="student-quiz-tab" class="tab-content no-print" style="display: none;">
+            <div class="card" style="border: 2px solid #3498db;">
+                <h2 style="text-align: center;">🎓 Онлайн Тестілеу жүйесі</h2>
+                
+                <div id="student-login-box" style="text-align: center; margin-top: 20px;">
+                    <p class="hint">Тест тапсыру үшін аты-жөніңізді енгізіңіз:</p>
+                    <input type="text" id="studentNameInput" placeholder="Аты-жөніңіз (Мысалы: Айдын)" style="max-width: 300px; margin: 0 auto 15px auto;">
+                    <p id="test-info-hint" style="font-size: 14px; color: #555; margin-bottom: 15px;"></p>
+                    <button type="button" onclick="startInteractiveQuiz()" class="btn-generate" style="max-width: 300px; margin: 0 auto;">Тестті бастау 🚀</button>
+                </div>
+
+                <div id="interactive-quiz-box" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 id="student-greeting" style="margin: 0; color: #2c3e50;"></h4>
+                        <div id="timer-display" style="font-size: 15px; font-weight: bold; color: #e74c3c; background: #fadbd8; padding: 5px 10px; border-radius: 5px;">
+                            ⏱️ Уақыт: <span id="time-left">00:00</span>
+                        </div>
+                    </div>
+
+                    <div id="quiz-question-container" style="background: #f9f9f9; padding: 15px; border-radius: 5px; border: 1px solid #ddd; margin-bottom: 15px;"></div>
+
+                    <button type="button" onclick="nextInteractiveQuestion()" class="btn-generate" id="next-quiz-btn">Келесі сұрақ</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script src="script.js"></script>
+    <!-- Қосымша навигация және ойын/топқа бөлу скрипттері -->
     <script>
-        // Оқушы беті ашылғанда мұғалім қойған баптауларды (сұрақ саны мен уақытты) экранға шығарып тұру
+        function switchTab(tabId) {
+            let tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.style.display = 'none');
+            
+            let target = document.getElementById(tabId);
+            if (target) target.style.display = 'block';
+
+            let buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        // Ойын құрастырғыш логикасы
+        let gameData = [];
+        let currentGameIdx = 0;
+
+        function addGameField() {
+            let container = document.getElementById('game-questions-container');
+            let count = container.children.length + 1;
+            let div = document.createElement('div');
+            div.style.marginBottom = "10px";
+            div.style.display = "flex";
+            div.style.gap = "10px";
+            div.innerHTML = '<input type="text" class="g-q-input" placeholder="' + count + '-сұрақ" style="flex:2; padding:8px; border: 1px solid #ccc; border-radius: 5px;"> ' +
+                            '<input type="text" class="g-a-input" placeholder="Дұрыс жауабы" style="flex:1; padding:8px; border: 1px solid #ccc; border-radius: 5px;">';
+            container.appendChild(div);
+        }
+
+        function startGameSession() {
+            let title = document.getElementById('gameTitle').value.trim() || "Сабақ викторинасы";
+            let qInputs = document.querySelectorAll('.g-q-input');
+            let aInputs = document.querySelectorAll('.g-a-input');
+            
+            gameData = [];
+            for(let i=0; i<qInputs.length; i++) {
+                if(qInputs[i].value.trim() !== "") {
+                    gameData.push({
+                        q: qInputs[i].value.trim(),
+                        a: aInputs[i].value.trim()
+                    });
+                }
+            }
+
+            if(gameData.length === 0) {
+                alert("Өтініш, кем дегенде 1 ойын сұрағын енгізіңіз!");
+                return;
+            }
+
+            currentGameIdx = 0;
+            document.getElementById('displayGameTitle').innerText = "🎮 " + title;
+            document.getElementById('gameShowcase').style.display = "block";
+            showGameCard();
+        }
+
+        function showGameCard() {
+            if(currentGameIdx >= gameData.length) {
+                document.getElementById('gameQuestionBox').innerText = "🎉 Ойын аяқталды! Барлық сұрақтар өтілді.";
+                document.getElementById('gameAnswerBox').style.display = "none";
+                return;
+            }
+            document.getElementById('gameQuestionBox').innerText = (currentGameIdx + 1) + "-сұрақ: " + gameData[currentGameIdx].q;
+            document.getElementById('gameAnswerBox').innerText = "Дұрыс жауабы: " + gameData[currentGameIdx].a;
+            document.getElementById('gameAnswerBox').style.display = "none";
+        }
+
+        function toggleGameAnswer() {
+            let box = document.getElementById('gameAnswerBox');
+            box.style.display = (box.style.display === "none") ? "block" : "none";
+        }
+
+        function nextGameCard() {
+            currentGameIdx++;
+            showGameCard();
+        }
+
+        // Топқа бөлу логикасы
+        function divideIntoGroups() {
+            let input = document.getElementById('studentsListInput');
+            let area = document.getElementById('groupsResultArea');
+            if (!input || !area) return;
+
+            let students = input.value.split('\n').map(s => s.trim()).filter(s => s !== "");
+            let groupCount = parseInt(document.getElementById('groupCount').value) || 2;
+            let method = document.getElementById('groupMethod').value;
+
+            if (students.length === 0) {
+                alert("Өтініш, оқушылар тізімін енгізіңіз!");
+                return;
+            }
+
+            let groups = Array.from({ length: groupCount }, () => []);
+
+            if (method === 'random') {
+                let shuffled = students.slice().sort(() => 0.5 - Math.random());
+                shuffled.forEach((student, index) => {
+                    groups[index % groupCount].push(student);
+                });
+            } else {
+                students.forEach((student, index) => {
+                    groups[index % groupCount].push(student);
+                });
+            }
+
+            let html = '<div style="margin-top: 15px; display: grid; gap: 10px;">';
+            groups.forEach((group, idx) => {
+                html += '<div style="background: #f9f9f9; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">' +
+                        '<strong>🔹 ' + (idx + 1) + '-топ:</strong> ' + (group.length > 0 ? group.join(', ') : '<i>Бос</i>') +
+                        '</div>';
+            });
+            html += '</div>';
+            area.innerHTML = html;
+        }
+
+        // Оқушы режимі ашылғанда баптауларды шығару
         document.addEventListener('DOMContentLoaded', function() {
-            let qCount = localStorage.getItem('quiz_q_count') || 10;
+            let qCount = localStorage.getItem('quiz_q_count') || 5;
             let tMinutes = localStorage.getItem('quiz_time_minutes') || 10;
             let infoHint = document.getElementById('test-info-hint');
             if (infoHint) {
@@ -49,5 +323,6 @@
             }
         });
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
