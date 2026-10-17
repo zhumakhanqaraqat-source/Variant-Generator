@@ -1,4 +1,9 @@
-let questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || [];
+let defaultQuestions = [
+    "1. 2 + 2 = ?\nA) 3\n*B) 4\nC) 5",
+    "2. Қазақстанның астанасы қай қала?\nA) Алматы\n*B) Астана\nC) Шымкент"
+];
+
+let questions = JSON.parse(localStorage.getItem('my_quiz_questions')) || defaultQuestions;
 
 document.addEventListener('DOMContentLoaded', function() {
     renderQuestions();
