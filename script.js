@@ -97,7 +97,6 @@ function generateVariants() {
     let qPerVariant = parseInt(qPerVariantInput ? qPerVariantInput.value : 1);
     let testMinutes = parseInt(timeInput ? timeInput.value : 10);
 
-    // Мұғалім енгізген нақты сұрақ саны мен минутты міндетті түрде сақтаймыз
     localStorage.setItem('quiz_q_count', qPerVariant);
     localStorage.setItem('quiz_time_minutes', testMinutes);
 
@@ -168,11 +167,9 @@ function startInteractiveQuiz() {
         return;
     }
 
-    // Мұғалім панелінен сақталған мәндерді нақтылап оқу
-    let targetCount = parseInt(localStorage.getItem('quiz_q_count')) || 10;
+    let targetCount = parseInt(localStorage.getItem('quiz_q_count')) || 5;
     let targetMinutes = parseInt(localStorage.getItem('quiz_time_minutes')) || 10;
 
-    // Егер базадағы сұрақ саны мұғалім сұрағаннан аз болса, барлық сұрақты аламыз
     let takeCount = Math.min(targetCount, questions.length);
 
     let shuffled = questions.slice().sort(function() { return 0.5 - Math.random(); });
@@ -181,7 +178,7 @@ function startInteractiveQuiz() {
     currentQuizIdx = 0;
     quizScore = 0;
     studentAnswers = [];
-    quizTimeLeft = targetMinutes * 60; // Мұғалім қойған минутты секундқа айналдыру
+    quizTimeLeft = targetMinutes * 60;
 
     document.getElementById('student-login-box').style.display = 'none';
     document.getElementById('interactive-quiz-box').style.display = 'block';
