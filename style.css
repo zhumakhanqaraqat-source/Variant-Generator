@@ -30,7 +30,7 @@ h1 {
     margin-bottom: 8px;
 }
 
-textarea, input[type="number"] {
+textarea, input[type="number"], input[type="text"], select {
     width: 100%;
     padding: 10px;
     margin: 8px 0 15px 0;
@@ -43,18 +43,6 @@ textarea, input[type="number"] {
 
 textarea {
     resize: vertical;
-}
-
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    gap: 8px;
-}
-
-.checkbox-group input {
-    width: auto;
-    cursor: pointer;
 }
 
 button {
@@ -177,7 +165,22 @@ button:hover {
     white-space: pre-line;
 }
 
-/* Печать алайында артық элементтерді жасыру */
+/* Nav styles */
+.nav-btn {
+    background: #34495e;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.nav-btn:hover, .nav-btn.active {
+    background: #3498db;
+}
+
 @media print {
     body {
         background-color: #fff;
